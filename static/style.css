@@ -120,3 +120,191 @@ main.container {
   color: #444;
   margin-bottom: 1.5rem;
 }
+
+/* An error message box */
+.error-banner {
+  background: #fdf0f0;
+  border-left: 4px solid #c0392b;
+  padding: 0.75rem 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.9rem;
+  color: #7b2020;
+  margin-bottom: 1.5rem;
+}
+
+/* --- Forms ------------------------------------------- */
+
+.intake-form {
+  max-width: 700px;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.2rem;
+  color: #1a1a1a;
+}
+
+.field-hint {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.82rem;
+  color: #777;
+  margin-bottom: 0.4rem;
+}
+
+.optional {
+  font-weight: 400;
+  color: #999;
+  font-size: 0.85rem;
+}
+
+.form-group textarea,
+.form-group select,
+.form-group input[type="file"] {
+  width: 100%;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.95rem;
+  color: #222;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 0.5rem 0.6rem;
+}
+
+.form-group textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.form-group select {
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.form-group input[type="file"] {
+  padding: 0.4rem 0.5rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.88rem;
+}
+
+/* Two-column row for the two dropdowns */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-actions {
+  margin-top: 1.75rem;
+}
+
+/* Primary action button */
+.btn-primary {
+  background: #2a6cc4;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 0.6rem 1.4rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: #1a4a8a;
+}
+
+/* Secondary (link-style) button */
+.btn-secondary {
+  display: inline-block;
+  background: #f0ede8;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 0.5rem 1.1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.btn-secondary:hover {
+  background: #e3dfd8;
+  color: #111;
+}
+
+/* --- Preview page ------------------------------------ */
+
+.preview-section {
+  margin-bottom: 2.5rem;
+  border: 1px solid #e0ddd8;
+  border-radius: 4px;
+  padding: 1.25rem 1.5rem;
+  background: #fff;
+}
+
+.preview-section h2 {
+  margin-top: 0;
+  font-size: 1.05rem;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.preview-section.assembled {
+  border-color: #2a6cc4;
+  background: #f7f9fd;
+}
+
+.preview-section.assembled h2 {
+  color: #2a6cc4;
+}
+
+/* Monospace text block for displaying preformatted content */
+.preview-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: #333;
+  background: #f8f7f5;
+  border: 1px solid #e8e5e0;
+  border-radius: 3px;
+  padding: 0.75rem 1rem;
+  margin: 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.preview-section.assembled .preview-text {
+  background: #eef2fa;
+  border-color: #c5d5ec;
+  max-height: 480px;
+}
+
+.preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.preview-actions.bottom {
+  margin-top: 1rem;
+  margin-bottom: 0;
+}
+
+.coming-soon {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.88rem;
+  color: #999;
+  font-style: italic;
+}

@@ -4,9 +4,87 @@
 
 {% block content %}
 <h1>New Entry</h1>
-<p class="subtitle">Paste or upload your transcript, choose your context and prompt, then hit Refine.</p>
+<p class="subtitle">Paste or upload your transcript, choose your context and prompt, then preview the assembled request.</p>
 
+{% if error %}
+<p class="error-banner">{{ error }}</p>
+{% endif %}
+
+{% if not context_packs or not prompt_profiles %}
 <p class="notice">
-  Refinement is not available yet. This screen will be wired up in Phase 3.
+  No
+  {% if not context_packs %}Context Packs{% endif %}
+  {% if not context_packs and not prompt_profiles %} or {% endif %}
+  {% if not prompt_profiles %}Prompt Profiles{% endif %}
+  found. The app will create default records on startup — try refreshing.
+  You can also manage them from the nav above.
 </p>
+{% endif %}
+
+<form method="post" action="/preview" enctype="multipart/form-data" class="intake-form">
+
+  <div class="form-group">
+    <label for="transcript">Transcript</label>
+    <p class="field-hint">Paste your raw voice-journal transcript here.</p>
+    <textarea
+      id="transcript"
+      name="transcript"
+      rows="14"
+      placeholder="Paste your transcript here…"
+    ></textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="transcript_file">Or upload a file</label>
+    <p class="field-hint">
+      Accepts .txt and .md files.
+      If you fill in the text box above <em>and</em> upload a file, the text box takes precedence.
+    </p>
+    <input type="file" id="transcript_file" name="transcript_file" accept=".txt,.md">
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="context_pack_id">Context Pack</label>
+      <p class="field-hint">Names, relationships, and recurring context.</p>
+      <select id="context_pack_id" name="context_pack_id" required>
+        {% for pack in context_packs %}
+        <option value="{{ pack['id'] }}"
+          {% if form.get('context_pack_id') == pack['id'] %}selected{% endif %}>
+          {{ pack['name'] }} (v{{ pack['version'] }})
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="prompt_profile_id">Prompt Profile</label>
+      <p class="field-hint">Editorial instructions for Claude.</p>
+      <select id="prompt_profile_id" name="prompt_profile_id" required>
+        {% for profile in prompt_profiles %}
+        <option value="{{ profile['id'] }}"
+          {% if form.get('prompt_profile_id') == profile['id'] %}selected{% endif %}>
+          {{ profile['name'] }} (v{{ profile['version'] }})
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="notes">Notes <span class="optional">(optional)</span></label>
+    <p class="field-hint">Anything you want to flag for this entry — context, mood, follow-ups.</p>
+    <textarea
+      id="notes"
+      name="notes"
+      rows="4"
+      placeholder="Optional notes for this entry…"
+    >{{ form.get('notes', '') }}</textarea>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn-primary">Preview assembled request &rarr;</button>
+  </div>
+
+</form>
 {% endblock %}

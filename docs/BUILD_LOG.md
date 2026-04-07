@@ -78,3 +78,50 @@ Scaffolded the full project structure and built a runnable FastAPI app shell wit
 **Phase 1 status:** Complete.
 
 **Next step:** Phase 2 — Context Packs and Prompt Profiles UI.
+
+---
+
+## 2026-04-07 — Phase 2: Transcript Intake and Prompt Assembly Preview
+
+**What happened:**
+Built the transcript intake form on the homepage, added validation, seeded placeholder records on startup, and built a preview page that shows each component of the assembled request before any Claude call is made.
+
+**Files created:**
+- `app/intake.py` — DB helpers (`get_all_context_packs`, `get_all_prompt_profiles`, `get_context_pack`, `get_prompt_profile`), `seed_defaults()` to insert placeholder records on first startup, and `assemble_request()` to build the full prompt string
+- `templates/preview.html` — shows the raw transcript, context pack, prompt profile, optional notes, and the assembled request (each in its own section); Back button; "Refine" placeholder for Phase 3
+
+**Files modified:**
+- `main.py` — lifespan now calls `seed_defaults()`; `GET /` passes pack and profile lists to the template; new `POST /preview` route handles validation, transcript resolution, assembly, and preview rendering
+- `templates/index.html` — rewritten as the real intake form: transcript textarea, file upload (.txt/.md), two dropdowns, notes textarea, submit button; error banner; empty-state notice
+- `static/style.css` — added form styles (label, hint, textarea, select, file input, two-column dropdown row, button), error banner, preview section cards, monospace text block, assembled request highlight
+
+**Transcript precedence rule:**
+If the user fills in the textarea AND uploads a file, the textarea wins. Reason: the textarea is the visible input. If there is text in the box, that is what the user intends to submit. A file upload alongside existing textarea content is almost certainly accidental. This rule is documented in the `POST /preview` docstring.
+
+**Seed bootstrap:**
+`seed_defaults()` checks whether `context_packs` and `prompt_profiles` each have zero rows. If so, it inserts one placeholder record for each. This runs every startup via the lifespan hook but only writes when the tables are empty. The actual seed files (`seed_files/`) are not ingested yet — that is planned for a later phase.
+
+**Assembled request format:**
+`assemble_request()` concatenates: prompt profile content → `---` separator → context pack content → `---` → transcript → `---` → notes (if provided). This matches the order described in TECH_DECISIONS.md and will be sent to Claude unchanged in Phase 3.
+
+**Validation handled:**
+- No transcript text and no file → error
+- File provided with a disallowed extension → error (allowed: .txt, .md)
+- Transcript text present (after stripping whitespace) is empty → error
+- Context pack or prompt profile not found in DB → error
+- On any error, the home form is re-rendered with the error message and the user's previous dropdown/notes selections preserved
+
+**What was not done in this phase:**
+- No Claude API call (Phase 3)
+- No CRUD for Context Packs or Prompt Profiles (was originally Phase 2 in PHASE_PLAN, now deferred — the task asked for intake + preview only)
+- No save/archive/export (Phase 4)
+
+**Assumptions made:**
+1. FastAPI's `UploadFile` sends an object with `filename == ""` when no file is selected. The check `transcript_file.filename != ""` is the reliable way to detect whether a real file was uploaded.
+2. File content is decoded as UTF-8 with `errors="replace"` so non-UTF-8 bytes become replacement characters rather than raising an exception.
+3. The textarea is not pre-populated on error (the user's typed transcript is lost if they hit an error). This is acceptable for a local single-user tool. The dropdown selections and notes field are preserved.
+4. `assemble_request()` is a pure function — it takes strings and returns a string. It has no DB or API side effects, making it easy to test in isolation in Phase 3.
+
+**Phase 2 status:** Complete.
+
+**Next step:** Phase 3 — Claude API call and review page.
