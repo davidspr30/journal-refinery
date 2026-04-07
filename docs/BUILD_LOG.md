@@ -125,3 +125,53 @@ If the user fills in the textarea AND uploads a file, the textarea wins. Reason:
 **Phase 2 status:** Complete.
 
 **Next step:** Phase 3 — Claude API call and review page.
+
+---
+
+## 2026-04-07 — Phase 3: Claude Integration and Review Page
+
+**What happened:**
+Wired up the Anthropic API, built a response parser, stored runs in the database, and built the side-by-side review page. The full end-to-end flow now works: form → Claude → review.
+
+**Files created:**
+- `app/claude_client.py` — `call_claude(assembled_request)` → `(text, error)`. Uses the sync Anthropic SDK. Catches `AuthenticationError`, `RateLimitError`, `APIConnectionError`, `APIStatusError`, and the base `APIError` class. Returns `(None, human-readable message)` on any failure.
+- `app/parser.py` — `parse_response(raw_text)` → `(polished, ambiguities_or_None)`. Regex splits on the Ambiguities heading in all common forms Claude might output. Returns `None` for ambiguities if none are found or if the section is blank after stripping.
+- `app/runs.py` — `save_run(conn, ...)` inserts a run with all fields; `get_run(conn, run_id)` fetches one by id.
+- `templates/review.html` — side-by-side two-column layout (raw transcript | polished output), metadata strip (model, context pack, prompt profile, timestamp), yellow ambiguities block, error state.
+
+**Files modified:**
+- `app/config.py` — added `CLAUDE_MODEL` (default: `claude-sonnet-4-6`) and `CLAUDE_MAX_TOKENS` (default: `4096`). Both overridable via `.env`.
+- `app/db.py` — added `_migrate(conn)` called from `init_db()`. Checks `PRAGMA table_info(runs)` and adds any missing columns with `ALTER TABLE`. Handles: `model`, `assembled_request`, `response_raw`, `error_message`. Safe to run on any existing database.
+- `app/intake.py` — extracted `resolve_transcript(transcript_text, transcript_file, allowed_extensions)` as a shared async helper. Eliminated duplicated validation logic between `/preview` and `/refine`. Also added `_file_extension()` helper.
+- `main.py` — added `POST /refine` (validate → assemble → call Claude via `asyncio.to_thread` → save run → 303 redirect to `/review/{run_id}`) and `GET /review/{run_id}` (fetches run, pack, profile; renders review template). Updated `POST /preview` to use the shared `resolve_transcript` helper. Added all new imports.
+- `templates/index.html` — form action changed from `/preview` to `/refine`; button text changed to "Refine with Claude →"; subtitle updated.
+- `static/style.css` — added review page styles: `.review-header`, `.run-meta`, `.review-columns`, `.review-col`, `.review-text`, `.review-text.polished`, `.ambiguities-section`.
+- `.env.example` — documented optional `CLAUDE_MODEL` and `CLAUDE_MAX_TOKENS` vars.
+
+**How the Claude call works:**
+The sync `call_claude()` function is called inside the `async def refine` route using `await asyncio.to_thread(call_claude, assembled)`. This runs the blocking SDK call in a thread pool so it doesn't block the event loop. The assembled request is a single user-role message sent to the Anthropic Messages API.
+
+**How the ambiguities parser works:**
+`parse_response()` applies a single regex: `\n{1,2}\*{0,2}Ambiguities\.?\*{0,2}\s*\n` (case-insensitive). This matches the word "Ambiguities" as a standalone line, with optional surrounding `**` bold markers and an optional trailing period. The text is split on the first match: everything before is the polished entry, everything after is the ambiguities text. If there is no match, the full response is treated as the polished entry and ambiguities is `None`. An empty ambiguities section after stripping also returns `None`.
+
+**Error handling:**
+- Missing API key: caught before the API call, returns home with an error banner.
+- Any API failure: the run is saved with `status="error"` and the error message stored in `error_message`. The review page detects `status == 'error'` and shows the error instead of the two columns.
+- 404: `GET /review/{id}` raises `HTTPException(404)` if the run id does not exist.
+
+**What was not done in this phase:**
+- No save-as-journal-entry (Phase 4).
+- No archive page (Phase 4).
+- No Markdown export (Phase 4).
+- No CRUD for Context Packs or Prompt Profiles (deferred).
+
+**Assumptions made:**
+1. The sync Anthropic SDK client is instantiated inside `call_claude()` on every call rather than at module import time. This ensures the API key is always read from the current config state, and avoids any global client state.
+2. `asyncio.to_thread` is used to run the blocking SDK call. For a single-user local tool this is fine. If streaming is added later, the async client (`anthropic.AsyncAnthropic`) would be the cleaner choice.
+3. `max_tokens=4096` is enough for a typical journal entry with expansion. A very long transcript might approach or hit this limit. This is configurable via `CLAUDE_MAX_TOKENS` in `.env`.
+4. The `303 See Other` redirect after `POST /refine` ensures that refreshing the review page does not re-submit the form.
+5. Failed runs (status="error") are stored in the DB. The run ID appears in the review URL, which preserves it for debugging. The error_message is shown on the review page.
+
+**Phase 3 status:** Complete.
+
+**Next step:** Phase 4 — Save as journal entry, archive page, and Markdown export.

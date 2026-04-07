@@ -4,7 +4,7 @@
 
 {% block content %}
 <h1>New Entry</h1>
-<p class="subtitle">Paste or upload your transcript, choose your context and prompt, then preview the assembled request.</p>
+<p class="subtitle">Paste or upload your transcript, choose your context and prompt, and send it to Claude for refinement.</p>
 
 {% if error %}
 <p class="error-banner">{{ error }}</p>
@@ -21,7 +21,7 @@
 </p>
 {% endif %}
 
-<form method="post" action="/preview" enctype="multipart/form-data" class="intake-form">
+<form method="post" action="/refine" enctype="multipart/form-data" class="intake-form">
 
   <div class="form-group">
     <label for="transcript">Transcript</label>
@@ -83,7 +83,8 @@
   </div>
 
   <div class="form-actions">
-    <button type="submit" class="btn-primary">Preview assembled request &rarr;</button>
+    <button type="submit" class="btn-primary">Refine with Claude &rarr;</button>
+    <span class="field-hint">This sends your transcript to the Claude API.</span>
   </div>
 
 </form>

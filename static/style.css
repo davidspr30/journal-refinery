@@ -308,3 +308,108 @@ main.container {
   color: #999;
   font-style: italic;
 }
+
+/* --- Review page ------------------------------------- */
+
+.review-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.review-header h1 {
+  margin: 0;
+}
+
+/* Compact metadata strip */
+.run-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.8rem;
+  color: #666;
+  background: #f0ede8;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.55rem 1rem;
+  margin-bottom: 1.75rem;
+}
+
+/* Side-by-side columns for raw vs polished */
+.review-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.review-col h3 {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #999;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+/* Shared text display for transcript and polished output */
+.review-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: #222;
+  background: #fff;
+  border: 1px solid #e0ddd8;
+  border-radius: 4px;
+  padding: 1rem 1.25rem;
+  min-height: 200px;
+  max-height: 560px;
+  overflow-y: auto;
+}
+
+/* Polished column gets a subtle blue tint to distinguish it */
+.review-text.polished {
+  background: #f7f9fd;
+  border-color: #c5d5ec;
+}
+
+/* Ambiguities — yellow tint, visually distinct from main content */
+.ambiguities-section {
+  background: #fffbf0;
+  border: 1px solid #e8d98f;
+  border-radius: 4px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.ambiguities-section h3 {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #a07800;
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-weight: 700;
+}
+
+/* Ambiguities text uses the same base .review-text but without the override classes */
+.ambiguities-section .review-text {
+  background: #fffdf5;
+  border-color: #e8d98f;
+  min-height: unset;
+  max-height: 320px;
+}
+
+.review-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+}

@@ -124,8 +124,58 @@ def assemble_request(transcript, context_pack_content, prompt_profile_content, n
 
 
 # ---------------------------------------------------------------------------
+# Transcript resolution
+# ---------------------------------------------------------------------------
+
+async def resolve_transcript(transcript_text, transcript_file, allowed_extensions):
+    """
+    Determine the final transcript text from textarea input or file upload.
+
+    Precedence rule: if the user fills in the textarea AND uploads a file,
+    the textarea wins. The textarea is the visible input — what you see in
+    the box is what you intend to submit.
+
+    Returns (text, error_message).
+      On success: (non-empty string, None)
+      On failure: (None, human-readable error string)
+
+    This is async because reading an uploaded file requires awaiting.
+    """
+    file_provided = (
+        transcript_file is not None
+        and transcript_file.filename != ""
+    )
+
+    if transcript_text.strip():
+        # Textarea has content — use it regardless of any uploaded file.
+        return transcript_text.strip(), None
+
+    if file_provided:
+        suffix = _file_extension(transcript_file.filename)
+        if suffix not in allowed_extensions:
+            return None, (
+                f"Uploaded file must be .txt or .md, "
+                f"got '{suffix or transcript_file.filename}'."
+            )
+        raw_bytes = await transcript_file.read()
+        text = raw_bytes.decode("utf-8", errors="replace").strip()
+        if not text:
+            return None, "The uploaded file was empty."
+        return text, None
+
+    return None, "Please paste a transcript or upload a .txt or .md file."
+
+
+# ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
+def _file_extension(filename):
+    """Return the lowercase extension of a filename, e.g. '.txt'."""
+    if "." not in filename:
+        return ""
+    return "." + filename.rsplit(".", 1)[-1].lower()
+
 
 def _now():
     """Return current UTC time as an ISO 8601 string."""

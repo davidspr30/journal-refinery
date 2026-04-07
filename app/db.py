@@ -32,14 +32,15 @@ def get_connection():
 
 def init_db():
     """
-    Create all tables if they do not already exist.
+    Create all tables if they do not already exist, then apply any
+    column migrations needed for existing databases.
 
-    Safe to call on every startup — the IF NOT EXISTS clause means
-    it will never overwrite existing data.
+    Safe to call on every startup — existing data is never touched.
     """
     conn = get_connection()
     try:
         _create_tables(conn)
+        _migrate(conn)
         conn.commit()
     finally:
         conn.close()
@@ -109,3 +110,32 @@ def _create_tables(conn):
             value TEXT NOT NULL
         )
     """)
+
+
+def _migrate(conn):
+    """
+    Add columns that were introduced after the initial schema.
+
+    This runs every startup but only makes changes when a column is
+    missing — safe to call on any database, old or new.
+
+    SQLite does not support IF NOT EXISTS on ALTER TABLE, so we check
+    the existing columns via PRAGMA first.
+    """
+    existing_runs_cols = {
+        row[1] for row in conn.execute("PRAGMA table_info(runs)")
+    }
+
+    # Columns added in Phase 3.
+    new_runs_columns = [
+        ("model",             "TEXT"),
+        ("assembled_request", "TEXT"),
+        ("response_raw",      "TEXT"),
+        ("error_message",     "TEXT"),
+    ]
+
+    for col_name, col_type in new_runs_columns:
+        if col_name not in existing_runs_cols:
+            conn.execute(
+                f"ALTER TABLE runs ADD COLUMN {col_name} {col_type}"
+            )

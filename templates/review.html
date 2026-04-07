@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Review — Journal Refinery{% endblock %}
+
+{% block content %}
+
+<div class="review-header">
+  <h1>Review</h1>
+  <a href="/" class="btn-secondary">&larr; New entry</a>
+</div>
+
+{# ------------------------------------------------------------------ #}
+{# Metadata strip                                                        #}
+{# ------------------------------------------------------------------ #}
+
+<div class="run-meta">
+  <span><strong>Model:</strong> {{ run['model'] or '—' }}</span>
+  <span>
+    <strong>Context Pack:</strong>
+    {% if pack %}{{ pack['name'] }} v{{ run['context_pack_version'] }}{% else %}—{% endif %}
+  </span>
+  <span>
+    <strong>Prompt Profile:</strong>
+    {% if profile %}{{ profile['name'] }} v{{ run['prompt_profile_version'] }}{% else %}—{% endif %}
+  </span>
+  <span><strong>Run:</strong> {{ run['created_at'] }} UTC</span>
+</div>
+
+{# ------------------------------------------------------------------ #}
+{# Error state                                                           #}
+{# ------------------------------------------------------------------ #}
+
+{% if run['status'] == 'error' %}
+
+<div class="error-banner">
+  <strong>Claude returned an error.</strong>
+  {% if run['error_message'] %}<br>{{ run['error_message'] }}{% endif %}
+</div>
+
+<p>
+  <a href="/" class="btn-secondary">&larr; Back to form</a>
+</p>
+
+{# ------------------------------------------------------------------ #}
+{# Normal review state                                                   #}
+{# ------------------------------------------------------------------ #}
+
+{% else %}
+
+<div class="review-columns">
+
+  <div class="review-col">
+    <h3>Raw transcript</h3>
+    <div class="review-text">{{ run['transcript_raw'] }}</div>
+  </div>
+
+  <div class="review-col">
+    <h3>Polished output</h3>
+    <div class="review-text polished">{{ run['output_polished'] }}</div>
+  </div>
+
+</div>
+
+{# Ambiguities — only shown when Claude flagged something #}
+
+{% if run['output_ambiguities'] %}
+<section class="ambiguities-section">
+  <h3>Ambiguities</h3>
+  <div class="review-text">{{ run['output_ambiguities'] }}</div>
+</section>
+{% endif %}
+
+<div class="review-actions">
+  <a href="/" class="btn-secondary">&larr; New entry</a>
+  <span class="coming-soon">Save as journal entry — available in Phase 4</span>
+</div>
+
+{% endif %}
+
+{% endblock %}
