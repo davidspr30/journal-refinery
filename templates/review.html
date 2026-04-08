@@ -72,7 +72,24 @@
 
 <div class="review-actions">
   <a href="/" class="btn-secondary">&larr; New entry</a>
-  <span class="coming-soon">Save as journal entry — available in Phase 4</span>
+
+  {% if existing_entry_id %}
+    {# Run was already saved — show a link to it instead of the form #}
+    <a href="/entries/{{ existing_entry_id }}" class="btn-secondary">View saved entry &rarr;</a>
+  {% else %}
+    <form method="post" action="/entries" class="save-form">
+      <input type="hidden" name="run_id" value="{{ run['id'] }}">
+      <label for="entry_date" class="save-label">Date</label>
+      <input
+        type="date"
+        id="entry_date"
+        name="entry_date"
+        value="{{ today }}"
+        class="save-date-input"
+      >
+      <button type="submit" class="btn-primary">Save entry &rarr;</button>
+    </form>
+  {% endif %}
 </div>
 
 {% endif %}

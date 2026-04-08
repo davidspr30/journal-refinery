@@ -13,8 +13,10 @@ import asyncio
 from contextlib import asynccontextmanager
 
 import uvicorn
+from datetime import date as date_type
+
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -30,6 +32,7 @@ from app.intake import (
     resolve_transcript,
     seed_defaults,
 )
+from app.entries import get_all_entries, get_entry, get_entry_for_run, save_entry
 from app.parser import parse_response
 from app.runs import get_run, save_run
 
@@ -210,6 +213,8 @@ def review(request: Request, run_id: int):
             raise HTTPException(status_code=404, detail="Run not found.")
         pack = get_context_pack(conn, run["context_pack_id"])
         profile = get_prompt_profile(conn, run["prompt_profile_id"])
+        # Check whether this run has already been saved as an entry.
+        existing_entry = get_entry_for_run(conn, run_id)
     finally:
         conn.close()
 
@@ -218,7 +223,133 @@ def review(request: Request, run_id: int):
         "run": run,
         "pack": pack,
         "profile": profile,
+        "today": date_type.today().isoformat(),
+        "existing_entry_id": existing_entry["id"] if existing_entry else None,
     })
+
+
+# ---------------------------------------------------------------------------
+# Save entry — creates a permanent journal entry from a completed run
+# ---------------------------------------------------------------------------
+
+@app.post("/entries")
+def save_entry_route(
+    request: Request,
+    run_id: int = Form(...),
+    entry_date: str = Form(...),
+):
+    """
+    Save the polished output from a run as a permanent journal entry.
+
+    If the run has already been saved, redirects to the existing entry
+    rather than creating a duplicate.
+    """
+    conn = get_connection()
+    try:
+        # Guard: don't create a duplicate if already saved.
+        existing = get_entry_for_run(conn, run_id)
+        if existing:
+            return RedirectResponse(f"/entries/{existing['id']}", status_code=303)
+
+        run = get_run(conn, run_id)
+        if run is None:
+            raise HTTPException(status_code=404, detail="Run not found.")
+        if run["status"] != "complete":
+            raise HTTPException(status_code=400, detail="Only completed runs can be saved.")
+
+        pack = get_context_pack(conn, run["context_pack_id"])
+        profile = get_prompt_profile(conn, run["prompt_profile_id"])
+
+        entry_id = save_entry(
+            conn,
+            run_id=run_id,
+            entry_date=entry_date,
+            transcript_raw=run["transcript_raw"],
+            output_polished=run["output_polished"],
+            output_ambiguities=run["output_ambiguities"],
+            context_pack_id=run["context_pack_id"],
+            prompt_profile_id=run["prompt_profile_id"],
+            context_pack_version=run["context_pack_version"],
+            prompt_profile_version=run["prompt_profile_version"],
+            context_pack_name=pack["name"] if pack else "—",
+            prompt_profile_name=profile["name"] if profile else "—",
+        )
+    finally:
+        conn.close()
+
+    return RedirectResponse(f"/entries/{entry_id}", status_code=303)
+
+
+# ---------------------------------------------------------------------------
+# Archive — list of all saved entries
+# ---------------------------------------------------------------------------
+
+@app.get("/archive")
+def archive(request: Request):
+    """Show all saved journal entries, newest first."""
+    conn = get_connection()
+    try:
+        entries = get_all_entries(conn)
+    finally:
+        conn.close()
+
+    return templates.TemplateResponse("archive.html", {
+        "request": request,
+        "entries": entries,
+    })
+
+
+# ---------------------------------------------------------------------------
+# Entry detail — view a single saved entry
+# ---------------------------------------------------------------------------
+
+@app.get("/entries/{entry_id}")
+def entry_detail(request: Request, entry_id: int):
+    """Show a single saved journal entry."""
+    conn = get_connection()
+    try:
+        entry = get_entry(conn, entry_id)
+        if entry is None:
+            raise HTTPException(status_code=404, detail="Entry not found.")
+    finally:
+        conn.close()
+
+    return templates.TemplateResponse("entry.html", {
+        "request": request,
+        "entry": entry,
+    })
+
+
+# ---------------------------------------------------------------------------
+# Export — download a saved entry as a Markdown file
+# ---------------------------------------------------------------------------
+
+@app.get("/entries/{entry_id}/export")
+def export_entry(entry_id: int):
+    """
+    Generate and serve a Markdown file for a saved entry.
+
+    Filename format: YYYY-MM-DD-journal-entry.md
+    If the user has multiple entries on the same date, the files will
+    share a name — they can rename as needed. The entry id is not
+    included in the filename to keep it clean.
+    """
+    conn = get_connection()
+    try:
+        entry = get_entry(conn, entry_id)
+        if entry is None:
+            raise HTTPException(status_code=404, detail="Entry not found.")
+    finally:
+        conn.close()
+
+    markdown = _build_markdown(entry)
+    filename = f"{entry['entry_date']}-journal-entry.md"
+
+    return Response(
+        content=markdown,
+        media_type="text/plain; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -304,6 +435,47 @@ def health():
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
+def _build_markdown(entry):
+    """
+    Build the Markdown string for an exported journal entry.
+
+    Structure:
+        # Journal Entry — YYYY-MM-DD
+        metadata block
+        ---
+        polished text
+        ---              ← only if ambiguities present
+        ## Ambiguities   ← only if ambiguities present
+        ambiguities text
+    """
+    pack_credit = f"{entry['context_pack_name']} (v{entry['context_pack_version']})"
+    profile_credit = f"{entry['prompt_profile_name']} (v{entry['prompt_profile_version']})"
+
+    lines = [
+        f"# Journal Entry — {entry['entry_date']}",
+        "",
+        f"**Date:** {entry['entry_date']}  ",
+        f"**Context Pack:** {pack_credit}  ",
+        f"**Prompt Profile:** {profile_credit}",
+        "",
+        "---",
+        "",
+        entry["output_polished"],
+    ]
+
+    if entry["output_ambiguities"]:
+        lines += [
+            "",
+            "---",
+            "",
+            "## Ambiguities",
+            "",
+            entry["output_ambiguities"],
+        ]
+
+    return "\n".join(lines) + "\n"
+
 
 def _home_with_error(request, templates, context_packs, prompt_profiles, error, form):
     """Re-render the home page with an error message and the user's previous selections."""

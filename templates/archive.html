@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Archive — Journal Refinery{% endblock %}
+
+{% block content %}
+<h1>Archive</h1>
+<p class="subtitle">All saved journal entries, newest first.</p>
+
+{% if not entries %}
+
+<p class="notice">
+  No entries saved yet. Refine a transcript, review the result, and click
+  <strong>Save entry</strong> to start your archive.
+</p>
+
+{% else %}
+
+<ul class="archive-list">
+  {% for entry in entries %}
+  <li class="archive-item">
+    <div class="archive-item-date">{{ entry['entry_date'] }}</div>
+    <div class="archive-item-body">
+      <div class="archive-item-title">
+        <a href="/entries/{{ entry['id'] }}">{{ entry['title'] or '(no title)' }}</a>
+      </div>
+      <div class="archive-item-meta">
+        {{ entry['context_pack_name'] or '—' }} &middot;
+        {{ entry['prompt_profile_name'] or '—' }}
+      </div>
+    </div>
+    <div class="archive-item-actions">
+      <a href="/entries/{{ entry['id'] }}" class="btn-secondary">View</a>
+      <a href="/entries/{{ entry['id'] }}/export" class="btn-secondary">Export .md</a>
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+
+{% endif %}
+{% endblock %}

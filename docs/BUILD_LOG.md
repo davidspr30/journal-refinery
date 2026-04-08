@@ -175,3 +175,66 @@ The sync `call_claude()` function is called inside the `async def refine` route 
 **Phase 3 status:** Complete.
 
 **Next step:** Phase 4 — Save as journal entry, archive page, and Markdown export.
+
+---
+
+## 2026-04-08 — Phase 4: Save, Archive, and Markdown Export
+
+**What happened:**
+Added the ability to save a reviewed result as a permanent journal entry, browse all saved entries in an archive, view individual entries, and download any entry as a Markdown file.
+
+**Files created:**
+- `app/entries.py` — `save_entry()`, `get_entry()`, `get_entry_for_run()`, `get_all_entries()`. `save_entry()` auto-generates a `title` from the first ~100 characters of the polished output. Stores `context_pack_name` and `prompt_profile_name` at save time so export metadata is accurate even if a pack or profile is later renamed or deleted.
+- `templates/archive.html` — lists all entries newest first; shows date, auto-generated title, pack/profile names; each row has View and Export .md buttons; includes an empty-state notice.
+- `templates/entry.html` — entry detail page; polished text at full height (no max-height cap); ambiguities block if present; raw transcript in a native `<details>` collapsible element (no JavaScript needed); Export .md button; Back to Archive link.
+
+**Files modified:**
+- `app/db.py` — extended `_migrate()` to add four new columns to `entries`: `title`, `context_pack_name`, `prompt_profile_name`, `updated_at`. Migration is safe on existing databases.
+- `main.py` — added four routes:
+  - `POST /entries`: saves a run as an entry; redirects to detail on success; prevents duplicates by checking `get_entry_for_run()` first; returns 400 if run is not complete.
+  - `GET /archive`: renders all entries newest first.
+  - `GET /entries/{id}`: renders single entry detail.
+  - `GET /entries/{id}/export`: builds and serves the Markdown file as a download.
+  - Added `_build_markdown()` helper to construct the export content.
+  - Updated `GET /review/{run_id}` to pass `today` (ISO date) and `existing_entry_id` to the template.
+- `templates/review.html` — replaced "coming soon" with a real save form. Form shows a date input (pre-filled with today) and a hidden `run_id` field. If the run is already saved, shows a "View saved entry →" link instead of the form.
+- `static/style.css` — added: `.save-form`, `.save-label`, `.save-date-input` (inline form on review page); `.archive-list`, `.archive-item`, `.archive-item-date`, `.archive-item-body`, `.archive-item-title`, `.archive-item-meta`, `.archive-item-actions`; `.entry-header`, `.entry-section`, `.entry-body`, `.transcript-details` (collapsible raw transcript).
+
+**Export filename format:**
+`YYYY-MM-DD-journal-entry.md` — exactly the format specified. If two entries share the same date, they produce the same filename; the user renames as needed. The entry id is intentionally omitted to keep filenames clean.
+
+**Export Markdown structure:**
+```
+# Journal Entry — YYYY-MM-DD
+
+**Date:** YYYY-MM-DD
+**Context Pack:** Name (vN)
+**Prompt Profile:** Name (vN)
+
+---
+
+[polished journal text]
+
+---          ← only if ambiguities present
+## Ambiguities
+[ambiguities text]
+```
+
+**Duplicate-save guard:**
+`POST /entries` checks for an existing entry with the same `run_id` before inserting. If found, it redirects to the existing entry (303). This prevents accidental double-saves on double-click or page refresh.
+
+**What was not done in this phase:**
+- No CRUD for Context Packs or Prompt Profiles (still deferred).
+- No search, tags, or filtering on the archive.
+- No entry editing after save.
+
+**Assumptions made:**
+1. Entries are immutable after save. The `updated_at` field is set at creation time and is not updated by any current route. It is there for future use.
+2. `context_pack_name` and `prompt_profile_name` are stored at save time (denormalized). This means the exported Markdown always shows the name that was active when the entry was saved, even if the pack or profile is later renamed or deleted.
+3. Auto-generated titles are derived from the first ~100 characters of `output_polished`. No manual title entry is needed. The truncation backs up to the last word boundary to avoid mid-word cuts.
+4. The native HTML `<details>` / `<summary>` element is used for the collapsible raw transcript on the entry detail page. This requires no JavaScript and works in all modern browsers.
+5. Export uses `media_type="text/plain; charset=utf-8"` with `Content-Disposition: attachment`. This reliably triggers a file download in all browsers regardless of `.md` file association settings.
+
+**Phase 4 status:** Complete.
+
+**Next step:** Phase 5 — Polish, hardening, CRUD for Context Packs and Prompt Profiles, seed file ingestion.

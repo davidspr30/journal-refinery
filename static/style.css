@@ -410,6 +410,159 @@ main.container {
 .review-actions {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
+  gap: 1rem;
   margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Inline save form on the review page */
+.save-form {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.save-label {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.88rem;
+  color: #555;
+  font-weight: 600;
+}
+
+.save-date-input {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 0.4rem 0.6rem;
+  background: #fff;
+  color: #222;
+}
+
+/* --- Archive page ------------------------------------ */
+
+.archive-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.archive-item {
+  display: flex;
+  align-items: baseline;
+  gap: 1.25rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid #e8e5e0;
+}
+
+.archive-item:first-child {
+  border-top: 1px solid #e8e5e0;
+}
+
+.archive-item-date {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.85rem;
+  color: #888;
+  white-space: nowrap;
+  min-width: 6rem;
+}
+
+.archive-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.archive-item-title a {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1rem;
+  color: #1a1a1a;
+  text-decoration: none;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.archive-item-title a:hover {
+  color: #2a6cc4;
+}
+
+.archive-item-meta {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.78rem;
+  color: #aaa;
+  margin-top: 0.15rem;
+}
+
+.archive-item-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* --- Entry detail page ------------------------------- */
+
+.entry-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.entry-header h1 {
+  margin: 0;
+}
+
+.entry-header-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-shrink: 0;
+  padding-top: 0.25rem;
+}
+
+.entry-section {
+  margin-bottom: 1.75rem;
+}
+
+/* Entry body: full height, no max-height cap */
+.entry-body {
+  max-height: none;
+}
+
+/* Collapsible raw transcript */
+.transcript-details {
+  margin-top: 2rem;
+  border: 1px solid #e0ddd8;
+  border-radius: 4px;
+}
+
+.transcript-details summary {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  padding: 0.6rem 1rem;
+  user-select: none;
+  list-style: none;
+}
+
+/* Remove default triangle in Safari/Firefox */
+.transcript-details summary::-webkit-details-marker { display: none; }
+
+.transcript-details summary::before {
+  content: "▶ ";
+  font-size: 0.7rem;
+}
+
+.transcript-details[open] summary::before {
+  content: "▼ ";
+}
+
+.transcript-details .transcript-raw {
+  border: none;
+  border-top: 1px solid #e0ddd8;
+  border-radius: 0 0 4px 4px;
+  max-height: 400px;
 }

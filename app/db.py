@@ -139,3 +139,21 @@ def _migrate(conn):
             conn.execute(
                 f"ALTER TABLE runs ADD COLUMN {col_name} {col_type}"
             )
+
+    # Columns added in Phase 4.
+    existing_entries_cols = {
+        row[1] for row in conn.execute("PRAGMA table_info(entries)")
+    }
+
+    new_entries_columns = [
+        ("title",               "TEXT"),
+        ("context_pack_name",   "TEXT"),
+        ("prompt_profile_name", "TEXT"),
+        ("updated_at",          "TEXT"),
+    ]
+
+    for col_name, col_type in new_entries_columns:
+        if col_name not in existing_entries_cols:
+            conn.execute(
+                f"ALTER TABLE entries ADD COLUMN {col_name} {col_type}"
+            )
