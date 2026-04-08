@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}{% if profile %}Edit: {{ profile['name'] }}{% else %}New Prompt Profile{% endif %} — Journal Refinery{% endblock %}
+
+{% block content %}
+
+<div class="mgmt-header">
+  {% if profile %}
+  <h1>Edit prompt profile</h1>
+  {% else %}
+  <h1>New prompt profile</h1>
+  {% endif %}
+  <div class="mgmt-header-actions">
+    <a href="/prompt-profiles" class="btn-secondary">&larr; Back</a>
+  </div>
+</div>
+
+{% if profile %}
+<p class="subtitle">
+  Saving will increment the version from v{{ profile['version'] }} to v{{ profile['version'] + 1 }}.
+  Existing saved entries that used v{{ profile['version'] }} are not affected.
+</p>
+{% endif %}
+
+{% if error %}
+<div class="error-banner">{{ error }}</div>
+{% endif %}
+
+<form
+  method="post"
+  action="{% if profile %}/prompt-profiles/{{ profile['id'] }}/edit{% else %}/prompt-profiles/new{% endif %}"
+  class="intake-form"
+>
+  <div class="form-group">
+    <label for="name">Name</label>
+    <input
+      type="text"
+      id="name"
+      name="name"
+      value="{{ profile['name'] if profile else '' }}"
+      required
+      style="width:100%; font-family:system-ui,-apple-system,sans-serif; font-size:0.95rem;
+             border:1px solid #ccc; border-radius:3px; padding:0.5rem 0.6rem;"
+    >
+  </div>
+
+  <div class="form-group">
+    <label for="content">Content</label>
+    <p class="field-hint">
+      Editorial instructions for Claude — voice, cleanup rules, formatting
+      preferences, and how to handle ambiguities.
+    </p>
+    <textarea
+      id="content"
+      name="content"
+      rows="16"
+      required
+    >{{ profile['content'] if profile else '' }}</textarea>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn-primary">
+      {% if profile %}Save changes{% else %}Create profile{% endif %}
+    </button>
+    <a href="/prompt-profiles" class="btn-secondary" style="margin-left:0.75rem;">Cancel</a>
+  </div>
+</form>
+
+{% endblock %}

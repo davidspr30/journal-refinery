@@ -20,6 +20,8 @@ from fastapi.responses import JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+import sqlite3
+
 import app.config as config
 from app.claude_client import call_claude
 from app.db import get_connection, init_db
@@ -35,6 +37,24 @@ from app.intake import (
 from app.entries import get_all_entries, get_entry, get_entry_for_run, save_entry
 from app.parser import parse_response
 from app.runs import get_run, save_run
+from app.packs import (
+    get_all_packs,
+    get_default_pack_id,
+    set_default_pack,
+    create_pack,
+    update_pack,
+    delete_pack,
+    duplicate_pack,
+    import_seed_pack,
+    get_all_profiles,
+    get_default_profile_id,
+    set_default_profile,
+    create_profile,
+    update_profile,
+    delete_profile,
+    duplicate_profile,
+    import_seed_profile,
+)
 
 ALLOWED_UPLOAD_EXTENSIONS = {".txt", ".md"}
 
@@ -70,6 +90,8 @@ def home(request: Request):
     try:
         context_packs = get_all_context_packs(conn)
         prompt_profiles = get_all_prompt_profiles(conn)
+        default_pack_id = get_default_pack_id(conn)
+        default_profile_id = get_default_profile_id(conn)
     finally:
         conn.close()
 
@@ -78,7 +100,10 @@ def home(request: Request):
         "context_packs": context_packs,
         "prompt_profiles": prompt_profiles,
         "error": None,
-        "form": {},
+        "form": {
+            "context_pack_id": default_pack_id,
+            "prompt_profile_id": default_profile_id,
+        },
     })
 
 
@@ -486,6 +511,350 @@ def _home_with_error(request, templates, context_packs, prompt_profiles, error, 
         "error": error,
         "form": form,
     })
+
+
+# ---------------------------------------------------------------------------
+# Context Pack management
+# ---------------------------------------------------------------------------
+
+@app.get("/context-packs")
+def context_packs_list(request: Request):
+    """List all context packs."""
+    conn = get_connection()
+    try:
+        packs = get_all_packs(conn)
+        default_id = get_default_pack_id(conn)
+    finally:
+        conn.close()
+
+    return templates.TemplateResponse("context_packs.html", {
+        "request": request,
+        "packs": packs,
+        "default_id": default_id,
+        "error": None,
+    })
+
+
+@app.get("/context-packs/new")
+def context_pack_new(request: Request):
+    """Show the blank create form for a context pack."""
+    return templates.TemplateResponse("context_pack_form.html", {
+        "request": request,
+        "pack": None,
+        "error": None,
+    })
+
+
+@app.post("/context-packs/new")
+def context_pack_create(
+    name: str = Form(...),
+    content: str = Form(...),
+):
+    """Create a new context pack and redirect to the list."""
+    if not name.strip() or not content.strip():
+        return templates.TemplateResponse("context_pack_form.html", {
+            "request": {},
+            "pack": None,
+            "error": "Name and content are both required.",
+        })
+
+    conn = get_connection()
+    try:
+        create_pack(conn, name, content)
+    finally:
+        conn.close()
+
+    return RedirectResponse("/context-packs", status_code=303)
+
+
+@app.get("/context-packs/{pack_id}/edit")
+def context_pack_edit(request: Request, pack_id: int):
+    """Show the edit form for an existing context pack."""
+    conn = get_connection()
+    try:
+        pack = get_context_pack(conn, pack_id)
+    finally:
+        conn.close()
+
+    if pack is None:
+        raise HTTPException(status_code=404, detail="Context pack not found.")
+
+    return templates.TemplateResponse("context_pack_form.html", {
+        "request": request,
+        "pack": pack,
+        "error": None,
+    })
+
+
+@app.post("/context-packs/{pack_id}/edit")
+def context_pack_update(
+    request: Request,
+    pack_id: int,
+    name: str = Form(...),
+    content: str = Form(...),
+):
+    """Save edits to a context pack (increments version)."""
+    if not name.strip() or not content.strip():
+        conn = get_connection()
+        try:
+            pack = get_context_pack(conn, pack_id)
+        finally:
+            conn.close()
+        return templates.TemplateResponse("context_pack_form.html", {
+            "request": request,
+            "pack": pack,
+            "error": "Name and content are both required.",
+        })
+
+    conn = get_connection()
+    try:
+        update_pack(conn, pack_id, name, content)
+    finally:
+        conn.close()
+
+    return RedirectResponse("/context-packs", status_code=303)
+
+
+@app.post("/context-packs/{pack_id}/duplicate")
+def context_pack_duplicate(pack_id: int):
+    """Duplicate a context pack (new record, version 1)."""
+    conn = get_connection()
+    try:
+        duplicate_pack(conn, pack_id)
+    finally:
+        conn.close()
+
+    return RedirectResponse("/context-packs", status_code=303)
+
+
+@app.post("/context-packs/{pack_id}/set-default")
+def context_pack_set_default(pack_id: int):
+    """Mark a context pack as the default selection on the home form."""
+    conn = get_connection()
+    try:
+        set_default_pack(conn, pack_id)
+    finally:
+        conn.close()
+
+    return RedirectResponse("/context-packs", status_code=303)
+
+
+@app.post("/context-packs/{pack_id}/delete")
+def context_pack_delete(request: Request, pack_id: int):
+    """Delete a context pack. Shows an error if it is referenced by saved runs."""
+    conn = get_connection()
+    try:
+        try:
+            delete_pack(conn, pack_id)
+        except sqlite3.IntegrityError:
+            packs = get_all_packs(conn)
+            default_id = get_default_pack_id(conn)
+            return templates.TemplateResponse("context_packs.html", {
+                "request": request,
+                "packs": packs,
+                "default_id": default_id,
+                "error": (
+                    "This context pack cannot be deleted because it is used by "
+                    "one or more saved runs or entries."
+                ),
+            })
+    finally:
+        conn.close()
+
+    return RedirectResponse("/context-packs", status_code=303)
+
+
+@app.post("/context-packs/import-seed")
+def context_pack_import_seed(request: Request):
+    """Import the bundled seed context pack from the seed_files/ directory."""
+    conn = get_connection()
+    try:
+        new_id, error = import_seed_pack(conn)
+        if error:
+            packs = get_all_packs(conn)
+            default_id = get_default_pack_id(conn)
+            return templates.TemplateResponse("context_packs.html", {
+                "request": request,
+                "packs": packs,
+                "default_id": default_id,
+                "error": error,
+            })
+    finally:
+        conn.close()
+
+    return RedirectResponse("/context-packs", status_code=303)
+
+
+# ---------------------------------------------------------------------------
+# Prompt Profile management
+# ---------------------------------------------------------------------------
+
+@app.get("/prompt-profiles")
+def prompt_profiles_list(request: Request):
+    """List all prompt profiles."""
+    conn = get_connection()
+    try:
+        profiles = get_all_profiles(conn)
+        default_id = get_default_profile_id(conn)
+    finally:
+        conn.close()
+
+    return templates.TemplateResponse("prompt_profiles.html", {
+        "request": request,
+        "profiles": profiles,
+        "default_id": default_id,
+        "error": None,
+    })
+
+
+@app.get("/prompt-profiles/new")
+def prompt_profile_new(request: Request):
+    """Show the blank create form for a prompt profile."""
+    return templates.TemplateResponse("prompt_profile_form.html", {
+        "request": request,
+        "profile": None,
+        "error": None,
+    })
+
+
+@app.post("/prompt-profiles/new")
+def prompt_profile_create(
+    name: str = Form(...),
+    content: str = Form(...),
+):
+    """Create a new prompt profile and redirect to the list."""
+    if not name.strip() or not content.strip():
+        return templates.TemplateResponse("prompt_profile_form.html", {
+            "request": {},
+            "profile": None,
+            "error": "Name and content are both required.",
+        })
+
+    conn = get_connection()
+    try:
+        create_profile(conn, name, content)
+    finally:
+        conn.close()
+
+    return RedirectResponse("/prompt-profiles", status_code=303)
+
+
+@app.get("/prompt-profiles/{profile_id}/edit")
+def prompt_profile_edit(request: Request, profile_id: int):
+    """Show the edit form for an existing prompt profile."""
+    conn = get_connection()
+    try:
+        profile = get_prompt_profile(conn, profile_id)
+    finally:
+        conn.close()
+
+    if profile is None:
+        raise HTTPException(status_code=404, detail="Prompt profile not found.")
+
+    return templates.TemplateResponse("prompt_profile_form.html", {
+        "request": request,
+        "profile": profile,
+        "error": None,
+    })
+
+
+@app.post("/prompt-profiles/{profile_id}/edit")
+def prompt_profile_update(
+    request: Request,
+    profile_id: int,
+    name: str = Form(...),
+    content: str = Form(...),
+):
+    """Save edits to a prompt profile (increments version)."""
+    if not name.strip() or not content.strip():
+        conn = get_connection()
+        try:
+            profile = get_prompt_profile(conn, profile_id)
+        finally:
+            conn.close()
+        return templates.TemplateResponse("prompt_profile_form.html", {
+            "request": request,
+            "profile": profile,
+            "error": "Name and content are both required.",
+        })
+
+    conn = get_connection()
+    try:
+        update_profile(conn, profile_id, name, content)
+    finally:
+        conn.close()
+
+    return RedirectResponse("/prompt-profiles", status_code=303)
+
+
+@app.post("/prompt-profiles/{profile_id}/duplicate")
+def prompt_profile_duplicate(profile_id: int):
+    """Duplicate a prompt profile (new record, version 1)."""
+    conn = get_connection()
+    try:
+        duplicate_profile(conn, profile_id)
+    finally:
+        conn.close()
+
+    return RedirectResponse("/prompt-profiles", status_code=303)
+
+
+@app.post("/prompt-profiles/{profile_id}/set-default")
+def prompt_profile_set_default(profile_id: int):
+    """Mark a prompt profile as the default selection on the home form."""
+    conn = get_connection()
+    try:
+        set_default_profile(conn, profile_id)
+    finally:
+        conn.close()
+
+    return RedirectResponse("/prompt-profiles", status_code=303)
+
+
+@app.post("/prompt-profiles/{profile_id}/delete")
+def prompt_profile_delete(request: Request, profile_id: int):
+    """Delete a prompt profile. Shows an error if it is referenced by saved runs."""
+    conn = get_connection()
+    try:
+        try:
+            delete_profile(conn, profile_id)
+        except sqlite3.IntegrityError:
+            profiles = get_all_profiles(conn)
+            default_id = get_default_profile_id(conn)
+            return templates.TemplateResponse("prompt_profiles.html", {
+                "request": request,
+                "profiles": profiles,
+                "default_id": default_id,
+                "error": (
+                    "This prompt profile cannot be deleted because it is used by "
+                    "one or more saved runs or entries."
+                ),
+            })
+    finally:
+        conn.close()
+
+    return RedirectResponse("/prompt-profiles", status_code=303)
+
+
+@app.post("/prompt-profiles/import-seed")
+def prompt_profile_import_seed(request: Request):
+    """Import the bundled seed prompt profile from the seed_files/ directory."""
+    conn = get_connection()
+    try:
+        new_id, error = import_seed_profile(conn)
+        if error:
+            profiles = get_all_profiles(conn)
+            default_id = get_default_profile_id(conn)
+            return templates.TemplateResponse("prompt_profiles.html", {
+                "request": request,
+                "profiles": profiles,
+                "default_id": default_id,
+                "error": error,
+            })
+    finally:
+        conn.close()
+
+    return RedirectResponse("/prompt-profiles", status_code=303)
 
 
 if __name__ == "__main__":

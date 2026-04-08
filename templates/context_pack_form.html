@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}{% if pack %}Edit: {{ pack['name'] }}{% else %}New Context Pack{% endif %} — Journal Refinery{% endblock %}
+
+{% block content %}
+
+<div class="mgmt-header">
+  {% if pack %}
+  <h1>Edit context pack</h1>
+  {% else %}
+  <h1>New context pack</h1>
+  {% endif %}
+  <div class="mgmt-header-actions">
+    <a href="/context-packs" class="btn-secondary">&larr; Back</a>
+  </div>
+</div>
+
+{% if pack %}
+<p class="subtitle">
+  Saving will increment the version from v{{ pack['version'] }} to v{{ pack['version'] + 1 }}.
+  Existing saved entries that used v{{ pack['version'] }} are not affected.
+</p>
+{% endif %}
+
+{% if error %}
+<div class="error-banner">{{ error }}</div>
+{% endif %}
+
+<form
+  method="post"
+  action="{% if pack %}/context-packs/{{ pack['id'] }}/edit{% else %}/context-packs/new{% endif %}"
+  class="intake-form"
+>
+  <div class="form-group">
+    <label for="name">Name</label>
+    <input
+      type="text"
+      id="name"
+      name="name"
+      value="{{ pack['name'] if pack else '' }}"
+      required
+      style="width:100%; font-family:system-ui,-apple-system,sans-serif; font-size:0.95rem;
+             border:1px solid #ccc; border-radius:3px; padding:0.5rem 0.6rem;"
+    >
+  </div>
+
+  <div class="form-group">
+    <label for="content">Content</label>
+    <p class="field-hint">
+      Names, relationships, places, and any recurring references
+      that help Claude understand your entries.
+    </p>
+    <textarea
+      id="content"
+      name="content"
+      rows="20"
+      required
+    >{{ pack['content'] if pack else '' }}</textarea>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn-primary">
+      {% if pack %}Save changes{% else %}Create pack{% endif %}
+    </button>
+    <a href="/context-packs" class="btn-secondary" style="margin-left:0.75rem;">Cancel</a>
+  </div>
+</form>
+
+{% endblock %}

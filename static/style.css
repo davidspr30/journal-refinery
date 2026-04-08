@@ -566,3 +566,110 @@ main.container {
   border-radius: 0 0 4px 4px;
   max-height: 400px;
 }
+
+/* --- Management pages (context packs, prompt profiles) --------------- */
+
+/* Page header row: title on left, action button on right */
+.mgmt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  gap: 1rem;
+}
+
+.mgmt-header h1 {
+  margin: 0;
+}
+
+.mgmt-header-actions {
+  flex-shrink: 0;
+}
+
+/* List of packs / profiles */
+.mgmt-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.mgmt-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid #e8e5e0;
+  flex-wrap: wrap;
+}
+
+.mgmt-item:first-child {
+  border-top: 1px solid #e8e5e0;
+}
+
+.mgmt-item-main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.mgmt-item-name {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1rem;
+  color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mgmt-item-meta {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.78rem;
+  color: #aaa;
+  white-space: nowrap;
+}
+
+.mgmt-item-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+/* Small pill badge shown next to the default item */
+.badge {
+  display: inline-block;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.2em 0.5em;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.badge-default {
+  background: #e4eefa;
+  color: #2a6cc4;
+  border: 1px solid #b8d0f0;
+}
+
+/* Destructive action button */
+.btn-danger {
+  display: inline-block;
+  background: #fff0f0;
+  color: #c0392b;
+  border: 1px solid #e8b8b8;
+  border-radius: 3px;
+  padding: 0.5rem 1.1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.btn-danger:hover {
+  background: #fde0e0;
+  color: #922b21;
+}

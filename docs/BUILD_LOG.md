@@ -237,4 +237,99 @@ Added the ability to save a reviewed result as a permanent journal entry, browse
 
 **Phase 4 status:** Complete.
 
+---
+
+## 2026-04-08 — Phase 5: Context Pack and Prompt Profile Management
+
+**What happened:**
+Added full CRUD management screens for Context Packs and Prompt Profiles — the
+reusable building blocks that feed into every journal refinement run.
+
+**New files:**
+- `app/packs.py` — all write operations for both resource types:
+  `create_pack / update_pack / delete_pack / duplicate_pack / get_all_packs /
+  get_default_pack_id / set_default_pack / import_seed_pack` and the matching
+  `*_profile` variants. Seed file paths are resolved via `PROJECT_ROOT` from
+  `config.py`.
+- `templates/context_packs.html` — list page: name, version badge, "default"
+  pill, Edit / Duplicate / Set default / Delete actions, Import seed button.
+- `templates/context_pack_form.html` — create and edit form (single template,
+  `pack` variable is `None` for new, a row for edit). Shows version increment
+  warning when editing.
+- `templates/prompt_profiles.html` — same structure as context_packs.html for
+  prompt profiles.
+- `templates/prompt_profile_form.html` — same structure as context_pack_form.html
+  for prompt profiles.
+
+**Modified files:**
+- `main.py` — added 18 new routes (9 per resource type):
+  `GET /context-packs`, `GET /context-packs/new`, `POST /context-packs/new`,
+  `GET /context-packs/{id}/edit`, `POST /context-packs/{id}/edit`,
+  `POST /context-packs/{id}/duplicate`, `POST /context-packs/{id}/set-default`,
+  `POST /context-packs/{id}/delete`, `POST /context-packs/import-seed`, and
+  identical routes under `/prompt-profiles`. Also updated `GET /` to read
+  `default_context_pack_id` and `default_prompt_profile_id` from the settings
+  table and pass them to the home form so the dropdowns pre-select defaults.
+- `static/style.css` — added `.mgmt-header`, `.mgmt-list`, `.mgmt-item`,
+  `.mgmt-item-main`, `.mgmt-item-name`, `.mgmt-item-meta`, `.mgmt-item-actions`,
+  `.badge`, `.badge-default`, `.btn-danger`.
+- `app/intake.py` — updated `seed_defaults` docstring to remove the stale
+  "later phase" note and point to the new management pages instead.
+
+**How versioning works:**
+- `update_pack` / `update_profile`: increments `version` in place with
+  `version = version + 1` in the SQL UPDATE. The existing row is overwritten;
+  there is no history stored. Entries that were saved under an earlier version
+  retain a snapshot of the name and version number they used (stored in
+  `context_pack_name`, `context_pack_version`, etc. on the entries table).
+- `duplicate_pack` / `duplicate_profile`: creates a brand-new row at version 1
+  with the name `"<original> (copy)"`. The original is untouched.
+
+**How defaults work:**
+- The `settings` table stores `default_context_pack_id` and
+  `default_prompt_profile_id` as plain text key/value pairs.
+- `set_default_pack` / `set_default_profile` use `INSERT ... ON CONFLICT DO
+  UPDATE` (upsert) so there is always at most one row per key.
+- `GET /` reads both defaults and passes them as `form["context_pack_id"]` and
+  `form["prompt_profile_id"]`. The existing `{% if ... == pack['id'] %}selected
+  {% endif %}` logic in `index.html` already handles this correctly.
+- If the default points to a deleted pack (edge case), the dropdown simply shows
+  nothing selected rather than erroring.
+
+**How seed import works:**
+- `import_seed_pack` reads `seed_files/correct names w context.md` and calls
+  `create_pack`. `import_seed_profile` does the same for
+  `seed_files/transcript prompt.md`.
+- Re-importing always creates a fresh record — there is no deduplication check.
+  The user can then set the imported record as the default and delete the old one
+  if desired.
+- If the seed file is missing, an error banner is shown on the list page.
+
+**Delete safety:**
+- SQLite's foreign key constraint prevents deleting a pack or profile that is
+  referenced by a run or entry. The route catches `sqlite3.IntegrityError` and
+  re-renders the list page with an explanatory error banner instead of 500ing.
+
+**Jinja2 note:**
+- A block (`{% block title %}`) cannot be defined inside a conditional
+  (`{% if %}...{% else %}...{% endif %}`). The title block must be a single
+  declaration with the conditional placed inside it:
+  `{% block title %}{% if pack %}Edit...{% else %}New...{% endif %}{% endblock %}`.
+
+**Assumptions made:**
+1. No edit history is stored. Incrementing the version number in place is
+   sufficient for the traceability requirement (entries record the version they
+   used at save time).
+2. "Import seed" always creates a new record. If the user wants to replace the
+   existing seed-imported record, they delete the old one and re-import.
+3. Delete confirmation uses the browser's native `confirm()` dialog (one line of
+   inline `onsubmit` JS). This requires no additional JavaScript infrastructure
+   and is acceptable for a local desktop app with a single user.
+4. The "Set default" button is hidden for the item that is already the default,
+   to avoid a confusing no-op click.
+5. The management list pages show all records sorted by name. No pagination is
+   needed for a personal journal tool.
+
+**Phase 5 status:** Complete.
+
 **Next step:** Phase 5 — Polish, hardening, CRUD for Context Packs and Prompt Profiles, seed file ingestion.

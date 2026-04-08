@@ -54,7 +54,8 @@ def seed_defaults(conn):
     This runs at startup so the dropdowns on the home screen always have
     at least one option. The user can edit or delete these at any time.
 
-    The actual seed files (seed_files/) will be ingested in a later phase.
+    To import the real seed files, use the "Import seed pack / profile"
+    buttons on the Context Packs and Prompt Profiles management pages.
     """
     now = _now()
 

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Context Packs — Journal Refinery{% endblock %}
+
+{% block content %}
+
+<div class="mgmt-header">
+  <h1>Context Packs</h1>
+  <div class="mgmt-header-actions">
+    <a href="/context-packs/new" class="btn-primary">+ New pack</a>
+  </div>
+</div>
+
+<p class="subtitle">
+  Context packs supply names, relationships, and recurring references
+  that help Claude understand your journal entries.
+</p>
+
+{% if error %}
+<div class="error-banner">{{ error }}</div>
+{% endif %}
+
+{# --- Import seed button --- #}
+
+<form method="post" action="/context-packs/import-seed" style="margin-bottom: 1.5rem;">
+  <button type="submit" class="btn-secondary">Import seed pack from file</button>
+  <span class="field-hint" style="display:inline; margin-left:0.5rem;">
+    Loads <code>seed_files/correct names w context.md</code> as a new pack.
+  </span>
+</form>
+
+{# --- List --- #}
+
+{% if not packs %}
+
+<p class="notice">
+  No context packs yet. Create one above or import the seed pack.
+</p>
+
+{% else %}
+
+<ul class="mgmt-list">
+  {% for pack in packs %}
+  <li class="mgmt-item">
+
+    <div class="mgmt-item-main">
+      <span class="mgmt-item-name">{{ pack['name'] }}</span>
+      {% if pack['id'] == default_id %}
+        <span class="badge badge-default">default</span>
+      {% endif %}
+      <span class="mgmt-item-meta">v{{ pack['version'] }} &middot; updated {{ pack['updated_at'] }} UTC</span>
+    </div>
+
+    <div class="mgmt-item-actions">
+      <a href="/context-packs/{{ pack['id'] }}/edit" class="btn-secondary">Edit</a>
+
+      <form method="post" action="/context-packs/{{ pack['id'] }}/duplicate" style="display:inline;">
+        <button type="submit" class="btn-secondary">Duplicate</button>
+      </form>
+
+      {% if pack['id'] != default_id %}
+      <form method="post" action="/context-packs/{{ pack['id'] }}/set-default" style="display:inline;">
+        <button type="submit" class="btn-secondary">Set default</button>
+      </form>
+      {% endif %}
+
+      <form method="post" action="/context-packs/{{ pack['id'] }}/delete" style="display:inline;"
+            onsubmit="return confirm('Delete \'{{ pack['name'] | replace("'", "\\'") }}\'? This cannot be undone.');">
+        <button type="submit" class="btn-danger">Delete</button>
+      </form>
+    </div>
+
+  </li>
+  {% endfor %}
+</ul>
+
+{% endif %}
+
+{% endblock %}
