@@ -508,4 +508,65 @@ Added four new sections to the README:
 
 **Phase 7 status:** Complete. v1 is done.
 
-**Next step:** Phase 5 — Polish, hardening, CRUD for Context Packs and Prompt Profiles, seed file ingestion.
+---
+
+## 2026-04-09 — Phase 8: Local Provider Refactor — Architecture Planning
+
+**Goal:** Replace the hard Anthropic API dependency with a local provider
+abstraction. Produce the full architecture documentation before writing any
+application code.
+
+**What prompted this phase:**
+The v1 app requires a paid Anthropic API key and a live internet connection for
+every transcript refinement. The user wants the app to work completely offline
+with a local model via `llama-server` (llama.cpp's built-in HTTP server), plus
+a manual export fallback when no local model is running.
+
+**Deliverables (docs only — no app code):**
+
+- `docs/LOCAL_PROVIDER_REFACTOR_SPEC.md` — full spec: what stays, what changes,
+  provider interface definition, both provider implementations, settings storage
+  design, migration strategy, acceptance criteria per phase, out-of-scope list.
+- `docs/PHASE_PLAN_LOCAL.md` — six-phase implementation plan (Phase 0 = this
+  planning phase; Phases 1–6 = implementation).
+- `docs/TECH_DECISIONS_LOCAL.md` — ten technical decisions with alternatives
+  considered and rationale.
+- `docs/BUILD_LOG.md` — this entry.
+
+**Key architecture decisions made:**
+
+1. Provider interface uses `typing.Protocol` — no inheritance, structurally typed,
+   type-checker verifiable.
+2. `manual_export` provider returns the assembled request as-is. No AI involved.
+   Used as the default provider so new installs work immediately.
+3. `llama_cpp_http` provider calls a separately-running `llama-server` via
+   `httpx.AsyncClient` using the OpenAI-compatible `/v1/chat/completions` endpoint.
+4. Provider config stored in a new `provider_configs` SQLite table. Active
+   provider selection stored in the existing `settings` table. Both editable
+   via a settings UI page (Phase 4).
+5. `httpx` is the only new dependency. No native extensions, no model downloads,
+   no process supervision.
+6. `assemble_request()` and `parse_response()` are completely unchanged — the
+   abstraction sits between them.
+7. The `(text, error)` return convention from `call_claude()` is preserved in
+   `refine_transcript()` so the route changes are minimal.
+
+**Implementation phases planned:**
+
+| Phase | Goal |
+|-------|------|
+| 1 | DB schema: `provider_configs` table + `runs.provider_type` column |
+| 2 | Provider abstraction + `manual_export`; delete `claude_client.py` |
+| 3 | `llama_cpp_http` provider + `/provider-health` endpoint |
+| 4 | Provider settings UI |
+| 5 | Remove `anthropic` SDK entirely |
+| 6 | Tests for all provider code |
+
+**Files that will NOT change:**
+`app/intake.py`, `app/parser.py`, `app/entries.py`, `app/packs.py`,
+`tests/test_intake.py`, `tests/test_parser.py`, `tests/test_entries.py`,
+`tests/test_export.py`, `seed_files/`.
+
+**Phase 8 status:** Complete (planning only).
+
+**Next step:** Phase 1 — Database schema changes.
