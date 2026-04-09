@@ -183,6 +183,7 @@ async def refine(
                 assembled_request=assembled,
                 provider_type=provider.provider_type,
                 provider_name=provider.provider_name,
+                provider_config_snapshot=provider.config_snapshot,
                 response_raw=None,
                 output_polished=None,
                 output_ambiguities=None,
@@ -202,6 +203,7 @@ async def refine(
                 assembled_request=assembled,
                 provider_type=provider.provider_type,
                 provider_name=provider.provider_name,
+                provider_config_snapshot=provider.config_snapshot,
                 response_raw=None,
                 output_polished=assembled,
                 output_ambiguities=None,
@@ -219,6 +221,7 @@ async def refine(
                 assembled_request=assembled,
                 provider_type=provider.provider_type,
                 provider_name=provider.provider_name,
+                provider_config_snapshot=provider.config_snapshot,
                 response_raw=response_text,
                 output_polished=polished,
                 output_ambiguities=ambiguities,
@@ -464,6 +467,30 @@ async def preview(
 def health():
     """Simple health check. Returns OK if the app is running."""
     return JSONResponse({"status": "ok"})
+
+
+@app.get("/provider-health")
+def provider_health():
+    """
+    Check whether the active provider is reachable and ready.
+
+    Returns JSON with: provider_type, provider_name, ok (bool), message.
+    For manual_export this always returns ok=true.
+    For llama_cpp_http this performs a real connectivity check against
+    the configured llama-server URL.
+    """
+    conn = get_connection()
+    try:
+        provider = get_provider(conn)
+    finally:
+        conn.close()
+    ok, message = provider.health_check()
+    return JSONResponse({
+        "provider_type": provider.provider_type,
+        "provider_name": provider.provider_name,
+        "ok": ok,
+        "message": message,
+    })
 
 
 # ---------------------------------------------------------------------------

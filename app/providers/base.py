@@ -18,6 +18,9 @@ class ProviderProtocol(Protocol):
     provider_name: str
     """Human-readable display name shown in the UI."""
 
+    config_snapshot: str
+    """JSON string of the current config (no secrets). Stored on each run record."""
+
     def validate_config(self) -> list[str]:
         """
         Check that the provider's settings are valid.

@@ -640,4 +640,73 @@ tool.
 
 **Phase 9 status:** Complete.
 
-**Next step:** Phase 3 — `llama_cpp_http` provider and `/provider-health` endpoint.
+---
+
+## 2026-04-09 — Phase 10: `llama_cpp_http` Provider and `/provider-health` Endpoint
+
+**Goal:** Add the local llama-server provider so the app can call a separately
+running `llama-server` instance for real AI-powered transcript refinement.
+
+**Files created:**
+
+- `app/providers/llama_cpp_http.py` — `LlamaCppHttpProvider` class
+
+**Files modified:**
+
+- `app/providers/base.py` — added `config_snapshot: str` to `ProviderProtocol`
+- `app/providers/manual_export.py` — added `__init__(self, config=None)` that
+  sets `self.config_snapshot = "{}"`
+- `app/providers/registry.py` — switched to factory-callable pattern; added
+  `_load_config()` to read `provider_configs` table; registered `llama_cpp_http`
+- `main.py` — added `GET /provider-health` endpoint; all three `save_run()` calls
+  now pass `provider_config_snapshot=provider.config_snapshot`
+- `requirements.txt` — added `httpx>=0.27`
+- `docs/BUILD_LOG.md` — this entry
+
+**How `llama_cpp_http` works:**
+
+Config (from `provider_configs` table, key `llama_cpp_http`):
+- `base_url` — URL of the running server (default: `http://localhost:8080`)
+- `model_name` — sent as `"model"` in the request; omitted if empty (server uses loaded model)
+- `api_key` — added as `Authorization: Bearer` header if non-empty; not stored in snapshot
+- `timeout` — seconds before giving up (default: 60)
+- `max_tokens` — completion token limit (default: 2048)
+
+`validate_config()` — checks `base_url` is set, timeout and max_tokens are positive; no network calls.
+
+`health_check()` — sync `httpx.Client` GET `{base_url}/health` with 5 s timeout.
+Returns (True, "llama-server is running") on HTTP 200; (False, ...) on connect error, timeout,
+or HTTP 503; (True, "Connected ... (HTTP N)") for other status codes (e.g. 404 on servers
+without a /health endpoint).
+
+`refine_transcript()` — async `httpx.AsyncClient` POST `{base_url}/v1/chat/completions`.
+Request body: `{"messages": [{"role": "user", "content": <assembled>}], "max_tokens": N, "stream": false}`.
+Extracts `choices[0].message.content` from the JSON response.
+Error branches: ConnectError, TimeoutException, HTTPStatusError, KeyError/IndexError (bad
+structure), ValueError/JSONDecodeError (non-JSON), generic Exception.
+
+**`config_snapshot` design:**
+
+All providers now expose a `config_snapshot: str` attribute (JSON string, no secrets).
+The `/refine` route passes this to `save_run()` as `provider_config_snapshot` so each
+run record permanently captures the provider settings that were active at the time.
+
+**Registry change:**
+
+`_REGISTRY` now maps provider type strings to factory callables (`lambda config: ProviderClass(config)`).
+`get_provider()` reads the active provider type, loads config from `provider_configs`,
+and calls the factory. Adding a future provider requires only one new line in `_REGISTRY`.
+
+**`/provider-health` endpoint:**
+
+`GET /provider-health` calls `provider.health_check()` and returns JSON:
+```json
+{"provider_type": "llama_cpp_http", "provider_name": "...", "ok": true, "message": "..."}
+```
+Called by the future settings UI to show connection status inline.
+
+**Test results:** 52 / 52 passing.
+
+**Phase 10 status:** Complete.
+
+**Next step:** Phase 4 — Provider settings UI (switch active provider, configure llama_cpp_http).

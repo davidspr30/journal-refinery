@@ -17,6 +17,11 @@ class ManualExportProvider:
     provider_type = "manual_export"
     provider_name = "Manual Export"
 
+    def __init__(self, config=None):
+        # No configuration needed; config arg accepted for a uniform
+        # constructor signature across all providers.
+        self.config_snapshot = "{}"
+
     def validate_config(self) -> list[str]:
         return []
 
