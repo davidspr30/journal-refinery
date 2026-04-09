@@ -332,4 +332,104 @@ reusable building blocks that feed into every journal refinement run.
 
 **Phase 5 status:** Complete.
 
+---
+
+## 2026-04-09 — Phase 6: Usability Polish and Error Handling
+
+**Goal:** Make the app feel solid for daily use without expanding scope.
+
+**Bug fixes:**
+- `POST /context-packs/new` and `POST /prompt-profiles/new` were missing
+  `request: Request` as a route parameter. When the validation-error path
+  re-rendered the form template, it passed `{"request": {}}` — a plain dict
+  instead of a real Starlette `Request`. Once `base.html` began using
+  `request.url.path` for active nav highlighting, this would have raised an
+  `AttributeError`. Fixed by adding `request: Request` to both route signatures.
+- `.btn-primary` lacked `display: inline-block`, so `<a class="btn-primary">`
+  (used on management list pages for "New pack" / "New profile") rendered as an
+  inline element where vertical padding collapsed. Added `display: inline-block`
+  and `text-decoration: none` to make it work identically on both `<a>` and
+  `<button>`.
+
+**Navigation:**
+- Added active-nav highlighting to `base.html`. Each `<a>` in `.site-nav` now
+  gets `aria-current="page"` when the current path matches it:
+  - `/` and `/review/…` → New Entry
+  - `/archive` and `/entries/…` → Archive
+  - `/context-packs/…` → Context Packs
+  - `/prompt-profiles/…` → Prompt Profiles
+  CSS rule `.site-nav a[aria-current="page"]` sets `color: #fff` and adds a
+  blue underline.
+- Added `{% block container_extra_class %}{% endblock %}` to `base.html`'s
+  `<main>` tag so child templates can opt into a wider container.
+- Added footer link back to the home page ("New entry") so there is always a
+  path home regardless of scroll position.
+
+**Review page:**
+- Opted in to `.container.wide { max-width: 1100px }` via
+  `{% block container_extra_class %}wide{% endblock %}`. This gives each
+  column ~530 px of reading width instead of ~420 px.
+- Added `required` to the date input (already enforced server-side, now also
+  in the browser).
+- "Ambiguities flagged by Claude" heading replaces the plain "Ambiguities"
+  heading; a short explanatory sentence is added below it.
+- Error state: added a "Common causes" hint below the error banner listing
+  API key, network, and quota as the most likely culprits.
+- Save row: added "Already saved." text before the "View saved entry" link so
+  it is clear why the save form is absent.
+
+**Home page:**
+- Split the single empty-state notice into three cases: both missing, only
+  context packs missing, only prompt profiles missing. Each case links directly
+  to the relevant management page.
+- The submit button is disabled (with a tooltip) when packs or profiles are
+  missing, rather than allowing a form submission that would fail.
+- Consolidated the file-upload hint: the precedence rule is now part of the
+  textarea label hint rather than a separate paragraph.
+
+**Archive page:**
+- Added a `+ New entry` button in the page header (same pattern as management
+  pages) so the user does not have to scroll to the nav.
+- Subtitle now shows entry count: "3 entries, newest first" / "1 entry, newest
+  first".
+- Empty-state text is now a `.notice` box with a direct link to refine instead
+  of a plain paragraph.
+- `(no title)` placeholder text changed to `(untitled)` for consistency.
+
+**Preview page:**
+- Removed the stale "Refine with Claude — available in Phase 3" span. The
+  preview route has been functional since Phase 3; the text was never updated.
+- Subtitle now accurately describes the page as an inspection tool.
+
+**CSS — responsive breakpoints:**
+- Added `@media (max-width: 720px)` rules to stack `.review-columns` to a
+  single column, stack `.form-row` dropdowns to full width, and allow
+  `.mgmt-item` actions to wrap below the name on narrow screens.
+
+**README:**
+- Complete rewrite aimed at a first-time user:
+  - Requirements section (Python 3.10+, API key, browser)
+  - Numbered setup steps with inline explanation
+  - "First use" section: walks through importing seed files, setting defaults,
+    and running the full refine → review → save → export flow
+  - "Day-to-day use" summary for returning users
+  - Troubleshooting section covering the five most common error states
+  - Updated project structure (removed the non-existent `exports/` entry,
+    added all `app/` modules)
+  - Updated phase table: all phases now show "Done"
+
+**Assumptions made:**
+1. Transcript text is not re-populated after a validation error. The textarea is
+   blank on re-render. This is acceptable because: (a) file uploads cannot be
+   re-populated at all by browsers, and (b) storing potentially large text in a
+   hidden field or server-side session would add complexity for little gain.
+2. Active nav does not attempt to highlight `/health` or `/preview` as unique
+   sections; they fall under "New Entry" and no active state respectively.
+   `/preview` falls under "New Entry" as it is part of the intake flow.
+3. Flash messages after create/edit/delete are not implemented. The list-page
+   redirect already shows the changed state; adding a flash mechanism would
+   require session infrastructure that is out of scope.
+
+**Phase 6 status:** Complete.
+
 **Next step:** Phase 5 — Polish, hardening, CRUD for Context Packs and Prompt Profiles, seed file ingestion.

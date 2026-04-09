@@ -4,28 +4,39 @@
 
 {% block content %}
 <h1>New Entry</h1>
-<p class="subtitle">Paste or upload your transcript, choose your context and prompt, and send it to Claude for refinement.</p>
+<p class="subtitle">Paste or upload your transcript, choose your context and prompt, then send it to Claude.</p>
 
 {% if error %}
-<p class="error-banner">{{ error }}</p>
+<div class="error-banner">{{ error }}</div>
 {% endif %}
 
-{% if not context_packs or not prompt_profiles %}
-<p class="notice">
-  No
-  {% if not context_packs %}Context Packs{% endif %}
-  {% if not context_packs and not prompt_profiles %} or {% endif %}
-  {% if not prompt_profiles %}Prompt Profiles{% endif %}
-  found. The app will create default records on startup — try refreshing.
-  You can also manage them from the nav above.
-</p>
+{% if not context_packs and not prompt_profiles %}
+<div class="notice">
+  <strong>No Context Packs or Prompt Profiles found.</strong>
+  Before you can refine a transcript, you need at least one of each.
+  <br><br>
+  Go to <a href="/context-packs">Context Packs</a> or
+  <a href="/prompt-profiles">Prompt Profiles</a> to create them, or use the
+  "Import seed pack / profile" buttons on those pages to load the built-in
+  examples.
+</div>
+{% elif not context_packs %}
+<div class="notice">
+  <strong>No Context Packs found.</strong>
+  <a href="/context-packs">Add one</a> or import the seed pack before refining.
+</div>
+{% elif not prompt_profiles %}
+<div class="notice">
+  <strong>No Prompt Profiles found.</strong>
+  <a href="/prompt-profiles">Add one</a> or import the seed profile before refining.
+</div>
 {% endif %}
 
 <form method="post" action="/refine" enctype="multipart/form-data" class="intake-form">
 
   <div class="form-group">
     <label for="transcript">Transcript</label>
-    <p class="field-hint">Paste your raw voice-journal transcript here.</p>
+    <p class="field-hint">Paste your raw voice-journal transcript here. If you paste text and also upload a file, the pasted text takes precedence.</p>
     <textarea
       id="transcript"
       name="transcript"
@@ -35,11 +46,8 @@
   </div>
 
   <div class="form-group">
-    <label for="transcript_file">Or upload a file</label>
-    <p class="field-hint">
-      Accepts .txt and .md files.
-      If you fill in the text box above <em>and</em> upload a file, the text box takes precedence.
-    </p>
+    <label for="transcript_file">Or upload a file <span class="optional">(optional)</span></label>
+    <p class="field-hint">Accepts .txt and .md files only.</p>
     <input type="file" id="transcript_file" name="transcript_file" accept=".txt,.md">
   </div>
 
@@ -73,18 +81,23 @@
 
   <div class="form-group">
     <label for="notes">Notes <span class="optional">(optional)</span></label>
-    <p class="field-hint">Anything you want to flag for this entry — context, mood, follow-ups.</p>
+    <p class="field-hint">Anything you want to flag for this entry — context, mood, follow-up items.</p>
     <textarea
       id="notes"
       name="notes"
       rows="4"
-      placeholder="Optional notes for this entry…"
+      placeholder="Optional notes…"
     >{{ form.get('notes', '') }}</textarea>
   </div>
 
   <div class="form-actions">
-    <button type="submit" class="btn-primary">Refine with Claude &rarr;</button>
-    <span class="field-hint">This sends your transcript to the Claude API.</span>
+    <button type="submit" class="btn-primary"
+      {% if not context_packs or not prompt_profiles %}disabled title="Add a Context Pack and Prompt Profile first"{% endif %}>
+      Refine with Claude &rarr;
+    </button>
+    <span class="field-hint" style="margin-left: 0.75rem;">
+      This sends your transcript to the Claude API.
+    </span>
   </div>
 
 </form>

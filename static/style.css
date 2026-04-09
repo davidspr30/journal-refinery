@@ -204,8 +204,9 @@ main.container {
   margin-top: 1.75rem;
 }
 
-/* Primary action button */
+/* Primary action button — works on both <button> and <a> */
 .btn-primary {
+  display: inline-block;
   background: #2a6cc4;
   color: #fff;
   border: none;
@@ -215,10 +216,13 @@ main.container {
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
+  text-decoration: none;
+  line-height: 1.4;
 }
 
 .btn-primary:hover {
   background: #1a4a8a;
+  color: #fff;
 }
 
 /* Secondary (link-style) button */
@@ -672,4 +676,50 @@ main.container {
 .btn-danger:hover {
   background: #fde0e0;
   color: #922b21;
+}
+
+/* --- Active nav link ----------------------------------------- */
+
+/* The current section is highlighted in white */
+.site-nav a[aria-current="page"] {
+  color: #fff;
+  border-bottom: 2px solid #2a6cc4;
+  padding-bottom: 1px;
+}
+
+/* --- Wide container (used by review page for two-column layout) */
+
+.container.wide {
+  max-width: 1100px;
+}
+
+/* --- Responsive: narrow screens ----------------------------- */
+
+/* Stack the two-column review layout on narrow viewports */
+@media (max-width: 720px) {
+  .review-columns {
+    grid-template-columns: 1fr;
+  }
+
+  /* Stack the context pack / prompt profile dropdowns */
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* Stack archive action buttons below the title */
+  .archive-item {
+    flex-wrap: wrap;
+  }
+
+  /* Stack management item actions below the name */
+  .mgmt-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
+  /* Save form on review page: stack vertically */
+  .save-form {
+    flex-wrap: wrap;
+  }
 }

@@ -2,6 +2,9 @@
 
 {% block title %}Review — Journal Refinery{% endblock %}
 
+{# Use a wider container so the two columns have comfortable reading width #}
+{% block container_extra_class %}wide{% endblock %}
+
 {% block content %}
 
 <div class="review-header">
@@ -37,6 +40,12 @@
   {% if run['error_message'] %}<br>{{ run['error_message'] }}{% endif %}
 </div>
 
+<p class="field-hint">
+  Common causes: missing or invalid API key, network interruption, or a quota
+  limit on your Anthropic account. Check your <code>.env</code> file and try
+  again.
+</p>
+
 <p>
   <a href="/" class="btn-secondary">&larr; Back to form</a>
 </p>
@@ -65,17 +74,26 @@
 
 {% if run['output_ambiguities'] %}
 <section class="ambiguities-section">
-  <h3>Ambiguities</h3>
+  <h3>Ambiguities flagged by Claude</h3>
+  <p class="field-hint" style="margin-bottom:0.75rem;">
+    Claude was uncertain about these parts of the transcript.
+    Review them before saving.
+  </p>
   <div class="review-text">{{ run['output_ambiguities'] }}</div>
 </section>
 {% endif %}
+
+{# ------------------------------------------------------------------ #}
+{# Save / already-saved section                                          #}
+{# ------------------------------------------------------------------ #}
 
 <div class="review-actions">
   <a href="/" class="btn-secondary">&larr; New entry</a>
 
   {% if existing_entry_id %}
     {# Run was already saved — show a link to it instead of the form #}
-    <a href="/entries/{{ existing_entry_id }}" class="btn-secondary">View saved entry &rarr;</a>
+    <span class="field-hint">Already saved.</span>
+    <a href="/entries/{{ existing_entry_id }}" class="btn-primary">View saved entry &rarr;</a>
   {% else %}
     <form method="post" action="/entries" class="save-form">
       <input type="hidden" name="run_id" value="{{ run['id'] }}">
@@ -86,6 +104,7 @@
         name="entry_date"
         value="{{ today }}"
         class="save-date-input"
+        required
       >
       <button type="submit" class="btn-primary">Save entry &rarr;</button>
     </form>

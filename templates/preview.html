@@ -5,8 +5,8 @@
 {% block content %}
 <h1>Preview</h1>
 <p class="subtitle">
-  Review the components below before sending to Claude.
-  Nothing has been sent yet.
+  Inspect the assembled request below. Nothing has been sent to Claude yet.
+  Go back to the form to submit.
 </p>
 
 <div class="preview-actions top">
@@ -47,15 +47,14 @@
   <h2>Assembled request</h2>
   <p class="field-hint">
     This is exactly what will be sent to Claude when you click Refine.
-    The order is: prompt profile → context pack → transcript
-    {% if notes %} → notes{% endif %}.
+    Order: prompt profile &rarr; context pack &rarr; transcript
+    {% if notes %}&rarr; notes{% endif %}.
   </p>
   <pre class="preview-text">{{ assembled }}</pre>
 </section>
 
 <div class="preview-actions bottom">
   <a href="/" class="btn-secondary">&larr; Back to form</a>
-  <span class="coming-soon">Refine with Claude — available in Phase 3</span>
 </div>
 
 {% endblock %}

@@ -547,13 +547,14 @@ def context_pack_new(request: Request):
 
 @app.post("/context-packs/new")
 def context_pack_create(
+    request: Request,
     name: str = Form(...),
     content: str = Form(...),
 ):
     """Create a new context pack and redirect to the list."""
     if not name.strip() or not content.strip():
         return templates.TemplateResponse("context_pack_form.html", {
-            "request": {},
+            "request": request,
             "pack": None,
             "error": "Name and content are both required.",
         })
@@ -719,13 +720,14 @@ def prompt_profile_new(request: Request):
 
 @app.post("/prompt-profiles/new")
 def prompt_profile_create(
+    request: Request,
     name: str = Form(...),
     content: str = Form(...),
 ):
     """Create a new prompt profile and redirect to the list."""
     if not name.strip() or not content.strip():
         return templates.TemplateResponse("prompt_profile_form.html", {
-            "request": {},
+            "request": request,
             "profile": None,
             "error": "Name and content are both required.",
         })

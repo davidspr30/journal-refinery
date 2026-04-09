@@ -3,15 +3,29 @@
 {% block title %}Archive — Journal Refinery{% endblock %}
 
 {% block content %}
-<h1>Archive</h1>
-<p class="subtitle">All saved journal entries, newest first.</p>
+
+<div class="mgmt-header">
+  <div>
+    <h1>Archive</h1>
+    {% if entries %}
+    <p class="subtitle">
+      {{ entries | length }} saved entr{{ 'y' if entries | length == 1 else 'ies' }}, newest first.
+    </p>
+    {% else %}
+    <p class="subtitle">All saved journal entries.</p>
+    {% endif %}
+  </div>
+  <div class="mgmt-header-actions">
+    <a href="/" class="btn-primary">+ New entry</a>
+  </div>
+</div>
 
 {% if not entries %}
 
-<p class="notice">
-  No entries saved yet. Refine a transcript, review the result, and click
-  <strong>Save entry</strong> to start your archive.
-</p>
+<div class="notice">
+  No entries yet. <a href="/">Refine a transcript</a>, review the result, and
+  click <strong>Save entry</strong> to start your archive.
+</div>
 
 {% else %}
 
@@ -21,7 +35,7 @@
     <div class="archive-item-date">{{ entry['entry_date'] }}</div>
     <div class="archive-item-body">
       <div class="archive-item-title">
-        <a href="/entries/{{ entry['id'] }}">{{ entry['title'] or '(no title)' }}</a>
+        <a href="/entries/{{ entry['id'] }}">{{ entry['title'] or '(untitled)' }}</a>
       </div>
       <div class="archive-item-meta">
         {{ entry['context_pack_name'] or '—' }} &middot;
