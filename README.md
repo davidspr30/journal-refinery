@@ -8,7 +8,9 @@ Everything runs on your machine. The only data that leaves is the API request to
 
 ## Requirements
 
-- Python 3.10 or newer
+- **Python 3.11 or 3.12** (recommended — Python 3.14 has known SSL issues on macOS)
+  - Mac: `brew install python@3.12` (see setup step 2)
+  - Windows: download from [python.org](https://www.python.org/downloads/)
 - An [Anthropic API key](https://console.anthropic.com/)
 - A modern web browser
 
@@ -26,9 +28,18 @@ cd journal-refinery
 ### 2. Create a virtual environment
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate      # Windows: .venv\Scripts\activate
+python3 -m venv .venv
+source .venv/bin/activate      # Windows: py -m venv .venv  &&  .venv\Scripts\activate
 ```
+
+> **macOS note:** use `python3`, not `python`. If `python3` is missing or very
+> new (3.14+), install a stable version first:
+> ```bash
+> brew install python@3.12
+> python3.12 -m venv .venv
+> source .venv/bin/activate
+> ```
+> If `brew` is not found, install Homebrew from [brew.sh](https://brew.sh).
 
 ### 3. Install dependencies
 
@@ -222,10 +233,27 @@ The file was blank. Paste the text directly into the textarea instead.
 Another process is using that port. Stop it, or start on a different port:
 
 ```bash
-UVICORN_PORT=8001 python main.py
+uvicorn main:app --port 8001 --reload
 ```
 
 Then open http://localhost:8001.
+
+**"ssl module not available" / pip install fails with SSL errors**
+This usually means your Python installation doesn't have OpenSSL linked — common
+with Python 3.14 or a python.org installer on macOS where certificates weren't set up.
+
+Fix: install a stable Python via Homebrew and recreate the venv:
+
+```bash
+brew install python@3.12
+deactivate                          # exit the broken venv if active
+rm -rf .venv                        # delete it
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+If `brew` is not found, install Homebrew from [brew.sh](https://brew.sh).
 
 **Can I use a different Claude model?**
 Yes. Add this to your `.env`:
