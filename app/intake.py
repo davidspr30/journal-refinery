@@ -93,6 +93,15 @@ def seed_defaults(conn):
             ),
         )
 
+    # Seed the default provider to manual_export if not already set.
+    provider_row = conn.execute(
+        "SELECT value FROM settings WHERE key = 'active_provider_type'"
+    ).fetchone()
+    if provider_row is None:
+        conn.execute(
+            "INSERT INTO settings (key, value) VALUES ('active_provider_type', 'manual_export')"
+        )
+
     conn.commit()
 
 

@@ -570,3 +570,74 @@ a manual export fallback when no local model is running.
 **Phase 8 status:** Complete (planning only).
 
 **Next step:** Phase 1 — Database schema changes.
+
+---
+
+## 2026-04-09 — Phase 9: Provider Abstraction and Manual Export
+
+**Goal:** Remove Anthropic from the critical path. Introduce the provider
+abstraction and wire up `manual_export` as the default provider.
+
+**Files created:**
+
+- `app/providers/__init__.py` — exports `get_provider()` and `list_provider_types()`
+- `app/providers/base.py` — `ProviderProtocol` definition using `typing.Protocol`
+- `app/providers/manual_export.py` — `ManualExportProvider` class
+- `app/providers/registry.py` — `get_provider(conn)` factory and `list_provider_types()`
+- `app/providers/exceptions.py` — `ProviderError`, `ProviderUnavailable`
+
+**Files modified:**
+
+- `app/db.py` — added `provider_configs` table to `_create_tables()`; added
+  `provider_type`, `provider_name`, `provider_config_snapshot` columns to `runs`
+  via `_migrate()`
+- `app/runs.py` — added `provider_type`, `provider_name`, `provider_config_snapshot`
+  kwargs to `save_run()`; made `model` optional (default `None`) for backward
+  compatibility with historical runs
+- `app/intake.py` — `seed_defaults()` now inserts `active_provider_type =
+  "manual_export"` into `settings` on first startup
+- `app/config.py` — removed `ANTHROPIC_API_KEY`, `CLAUDE_MODEL`,
+  `CLAUDE_MAX_TOKENS`; now only exposes `DATABASE_PATH`
+- `main.py` — removed `import asyncio`, `import app.config as config`,
+  `from app.claude_client import call_claude`; added `from app.providers import
+  get_provider`; `/refine` route now calls `await provider.refine_transcript(assembled)`
+  with a three-branch result handler (`error` / `manual_export` / AI-polished)
+- `templates/review.html` — metadata strip shows `provider_name` (falls back to
+  `model` for historical runs); added `manual_export` branch showing assembled
+  request in a copy textarea; error banner is now provider-agnostic;
+  ambiguities label updated
+- `static/style.css` — added `.info-banner` and `textarea.assembled-export` rules
+- `requirements.txt` — removed `anthropic==0.51.0`
+- `.env.example` — removed Anthropic key variables; now documents only the
+  optional `DATABASE_PATH` override
+- `README.md` — removed API key requirement from requirements section and setup;
+  updated first-use and day-to-day guides; updated troubleshooting; updated
+  project structure tree
+
+**Files deleted:**
+
+- `app/claude_client.py` — replaced by `app/providers/` package
+
+**Schema changes:**
+
+| Table | Change |
+|-------|--------|
+| `provider_configs` | New table: `id`, `provider_type` (UNIQUE), `config_json` |
+| `runs` | Three new nullable columns: `provider_type`, `provider_name`, `provider_config_snapshot` |
+| `settings` | Seeded with `active_provider_type = "manual_export"` on startup |
+
+All changes go through `_migrate()` — safe to run on an existing database.
+
+**How `manual_export` works:**
+
+`refine_transcript()` returns the assembled request text unchanged. The `/refine`
+route detects `provider.provider_type == "manual_export"` and stores the assembled
+text as `output_polished` without calling `parse_response()`. The review page
+shows the assembled text in a read-only textarea for copying to any external AI
+tool.
+
+**Test results:** 52 / 52 passing. All existing tests pass unchanged.
+
+**Phase 9 status:** Complete.
+
+**Next step:** Phase 3 — `llama_cpp_http` provider and `/provider-health` endpoint.

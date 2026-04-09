@@ -111,6 +111,16 @@ def _create_tables(conn):
         )
     """)
 
+    # provider_configs stores per-provider configuration as a JSON string.
+    # One row per provider type; the config is read at request time.
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS provider_configs (
+            id            INTEGER PRIMARY KEY,
+            provider_type TEXT    NOT NULL UNIQUE,
+            config_json   TEXT    NOT NULL DEFAULT '{}'
+        )
+    """)
+
 
 def _migrate(conn):
     """
@@ -128,10 +138,14 @@ def _migrate(conn):
 
     # Columns added in Phase 3.
     new_runs_columns = [
-        ("model",             "TEXT"),
-        ("assembled_request", "TEXT"),
-        ("response_raw",      "TEXT"),
-        ("error_message",     "TEXT"),
+        ("model",                    "TEXT"),
+        ("assembled_request",        "TEXT"),
+        ("response_raw",             "TEXT"),
+        ("error_message",            "TEXT"),
+        # Columns added in provider refactor.
+        ("provider_type",            "TEXT"),
+        ("provider_name",            "TEXT"),
+        ("provider_config_snapshot", "TEXT"),
     ]
 
     for col_name, col_type in new_runs_columns:

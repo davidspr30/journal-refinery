@@ -17,7 +17,7 @@
 {# ------------------------------------------------------------------ #}
 
 <div class="run-meta">
-  <span><strong>Model:</strong> {{ run['model'] or '—' }}</span>
+  <span><strong>Provider:</strong> {{ run['provider_name'] or run['model'] or '—' }}</span>
   <span>
     <strong>Context Pack:</strong>
     {% if pack %}{{ pack['name'] }} v{{ run['context_pack_version'] }}{% else %}—{% endif %}
@@ -36,14 +36,12 @@
 {% if run['status'] == 'error' %}
 
 <div class="error-banner">
-  <strong>Claude returned an error.</strong>
+  <strong>The provider returned an error.</strong>
   {% if run['error_message'] %}<br>{{ run['error_message'] }}{% endif %}
 </div>
 
 <p class="field-hint">
-  Common causes: missing or invalid API key, network interruption, or a quota
-  limit on your Anthropic account. Check your <code>.env</code> file and try
-  again.
+  Check your provider settings and try again.
 </p>
 
 <p>
@@ -51,7 +49,37 @@
 </p>
 
 {# ------------------------------------------------------------------ #}
-{# Normal review state                                                   #}
+{# Manual Export state — show assembled request for copying             #}
+{# ------------------------------------------------------------------ #}
+
+{% elif run['provider_type'] == 'manual_export' %}
+
+<div class="info-banner">
+  <strong>Manual Export mode.</strong>
+  Copy the assembled request below and paste it into any AI tool of your choice.
+  Then paste the polished result back here to save it.
+</div>
+
+<div class="review-columns">
+
+  <div class="review-col">
+    <h3>Raw transcript</h3>
+    <div class="review-text">{{ run['transcript_raw'] }}</div>
+  </div>
+
+  <div class="review-col">
+    <h3>Assembled request</h3>
+    <textarea class="review-text assembled-export" readonly>{{ run['output_polished'] }}</textarea>
+  </div>
+
+</div>
+
+<div class="review-actions">
+  <a href="/" class="btn-secondary">&larr; New entry</a>
+</div>
+
+{# ------------------------------------------------------------------ #}
+{# Normal review state — AI-polished output                             #}
 {# ------------------------------------------------------------------ #}
 
 {% else %}
@@ -70,13 +98,13 @@
 
 </div>
 
-{# Ambiguities — only shown when Claude flagged something #}
+{# Ambiguities — only shown when the provider flagged something #}
 
 {% if run['output_ambiguities'] %}
 <section class="ambiguities-section">
-  <h3>Ambiguities flagged by Claude</h3>
+  <h3>Ambiguities flagged by the provider</h3>
   <p class="field-hint" style="margin-bottom:0.75rem;">
-    Claude was uncertain about these parts of the transcript.
+    The provider was uncertain about these parts of the transcript.
     Review them before saving.
   </p>
   <div class="review-text">{{ run['output_ambiguities'] }}</div>

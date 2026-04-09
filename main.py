@@ -9,7 +9,6 @@ Run the app with:
 Then open http://localhost:8000 in your browser.
 """
 
-import asyncio
 from contextlib import asynccontextmanager
 
 import uvicorn
@@ -22,9 +21,8 @@ from fastapi.templating import Jinja2Templates
 
 import sqlite3
 
-import app.config as config
-from app.claude_client import call_claude
 from app.db import get_connection, init_db
+from app.providers import get_provider
 from app.intake import (
     assemble_request,
     get_all_context_packs,
@@ -158,16 +156,6 @@ async def refine(
                 form_state,
             )
 
-        # --- Check API key before proceeding ---------------------------
-
-        if not config.ANTHROPIC_API_KEY:
-            return _home_with_error(
-                request, templates, context_packs, prompt_profiles,
-                "ANTHROPIC_API_KEY is not set. "
-                "Copy .env.example to .env and add your Anthropic API key.",
-                form_state,
-            )
-
         # --- Assemble the full request ---------------------------------
 
         assembled = assemble_request(
@@ -177,13 +165,14 @@ async def refine(
             notes=notes,
         )
 
-        # --- Call Claude (sync SDK, run in thread so we don't block) ---
+        # --- Call the active provider ---------------------------------
 
-        response_text, api_error = await asyncio.to_thread(call_claude, assembled)
+        provider = get_provider(conn)
+        response_text, provider_error = await provider.refine_transcript(assembled)
 
         # --- Save run and redirect to review ---------------------------
 
-        if api_error:
+        if provider_error:
             run_id = save_run(
                 conn,
                 transcript_raw=resolved_transcript,
@@ -192,12 +181,31 @@ async def refine(
                 context_pack_version=pack["version"],
                 prompt_profile_version=profile["version"],
                 assembled_request=assembled,
-                model=config.CLAUDE_MODEL,
+                provider_type=provider.provider_type,
+                provider_name=provider.provider_name,
                 response_raw=None,
                 output_polished=None,
                 output_ambiguities=None,
                 status="error",
-                error_message=api_error,
+                error_message=provider_error,
+            )
+        elif provider.provider_type == "manual_export":
+            # No model was called. Store the assembled request as the output
+            # so the review page can display it for copying.
+            run_id = save_run(
+                conn,
+                transcript_raw=resolved_transcript,
+                context_pack_id=pack["id"],
+                prompt_profile_id=profile["id"],
+                context_pack_version=pack["version"],
+                prompt_profile_version=profile["version"],
+                assembled_request=assembled,
+                provider_type=provider.provider_type,
+                provider_name=provider.provider_name,
+                response_raw=None,
+                output_polished=assembled,
+                output_ambiguities=None,
+                status="complete",
             )
         else:
             polished, ambiguities = parse_response(response_text)
@@ -209,7 +217,8 @@ async def refine(
                 context_pack_version=pack["version"],
                 prompt_profile_version=profile["version"],
                 assembled_request=assembled,
-                model=config.CLAUDE_MODEL,
+                provider_type=provider.provider_type,
+                provider_name=provider.provider_name,
                 response_raw=response_text,
                 output_polished=polished,
                 output_ambiguities=ambiguities,
