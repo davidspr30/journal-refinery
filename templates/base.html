@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Journal Refinery{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container">
+      <a href="/" class="site-title">Journal Refinery</a>
+      <nav class="site-nav">
+        <a href="/"
+          {% if request.url.path == '/' or request.url.path.startswith('/review') or request.url.path == '/preview' %}aria-current="page"{% endif %}>New Entry</a>
+        <a href="/archive"
+          {% if request.url.path == '/archive' or request.url.path.startswith('/entries') %}aria-current="page"{% endif %}>Archive</a>
+        <a href="/context-packs"
+          {% if request.url.path.startswith('/context-packs') %}aria-current="page"{% endif %}>Context Packs</a>
+        <a href="/prompt-profiles"
+          {% if request.url.path.startswith('/prompt-profiles') %}aria-current="page"{% endif %}>Prompt Profiles</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container {% block container_extra_class %}{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      Journal Refinery &mdash; local-first &mdash; <a href="/">New entry</a>
+    </div>
+  </footer>
+
+</body>
+</html>

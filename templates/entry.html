@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}{{ entry['entry_date'] }} — Journal Refinery{% endblock %}
+
+{% block content %}
+
+<div class="entry-header">
+  <div>
+    <h1>{{ entry['entry_date'] }}</h1>
+    <p class="subtitle">{{ entry['title'] }}</p>
+  </div>
+  <div class="entry-header-actions">
+    <a href="/archive" class="btn-secondary">&larr; Archive</a>
+    <a href="/entries/{{ entry['id'] }}/export" class="btn-secondary">Export .md</a>
+  </div>
+</div>
+
+{# --- Metadata strip --- #}
+
+<div class="run-meta">
+  <span><strong>Date:</strong> {{ entry['entry_date'] }}</span>
+  <span>
+    <strong>Context Pack:</strong>
+    {{ entry['context_pack_name'] or '—' }} (v{{ entry['context_pack_version'] }})
+  </span>
+  <span>
+    <strong>Prompt Profile:</strong>
+    {{ entry['prompt_profile_name'] or '—' }} (v{{ entry['prompt_profile_version'] }})
+  </span>
+  <span><strong>Saved:</strong> {{ entry['created_at'] }} UTC</span>
+</div>
+
+{# --- Polished journal entry --- #}
+
+<section class="entry-section">
+  <div class="review-text polished entry-body">{{ entry['output_polished'] }}</div>
+</section>
+
+{# --- Ambiguities — only if present --- #}
+
+{% if entry['output_ambiguities'] %}
+<section class="ambiguities-section">
+  <h3>Ambiguities</h3>
+  <div class="review-text">{{ entry['output_ambiguities'] }}</div>
+</section>
+{% endif %}
+
+{# --- Raw transcript in a collapsible block --- #}
+
+<details class="transcript-details">
+  <summary>Raw transcript</summary>
+  <div class="review-text transcript-raw">{{ entry['transcript_raw'] }}</div>
+</details>
+
+{% endblock %}

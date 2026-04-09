@@ -1,0 +1,725 @@
+/* -------------------------------------------------------
+   Journal Refinery — base stylesheet
+   Plain CSS. No framework. Keep it readable.
+   ------------------------------------------------------- */
+
+/* --- Reset & base ------------------------------------ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 17px;
+  line-height: 1.6;
+  color: #222;
+  background: #faf9f7;
+}
+
+h1, h2, h3, h4 {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+h1 { font-size: 1.8rem; }
+h2 { font-size: 1.4rem; }
+h3 { font-size: 1.15rem; }
+
+p { margin-top: 0; margin-bottom: 1rem; }
+
+a { color: #2a6cc4; }
+a:hover { color: #1a4a8a; }
+
+/* --- Layout ------------------------------------------ */
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+/* --- Header ------------------------------------------ */
+
+.site-header {
+  background: #1e1e1e;
+  padding: 0.75rem 0;
+  border-bottom: 3px solid #2a6cc4;
+}
+
+.site-header .container {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.site-title {
+  color: #fff;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.site-nav {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.site-nav a {
+  color: #ccc;
+  text-decoration: none;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.9rem;
+}
+
+.site-nav a:hover {
+  color: #fff;
+}
+
+/* --- Main content ------------------------------------ */
+
+main.container {
+  padding-top: 2rem;
+  padding-bottom: 3rem;
+}
+
+/* --- Footer ------------------------------------------ */
+
+.site-footer {
+  background: #f0ede8;
+  border-top: 1px solid #ddd;
+  padding: 0.75rem 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.8rem;
+  color: #888;
+  text-align: center;
+}
+
+/* --- Utility ----------------------------------------- */
+
+.subtitle {
+  color: #555;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* A soft informational notice box */
+.notice {
+  background: #f0f4fa;
+  border-left: 4px solid #2a6cc4;
+  padding: 0.75rem 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.9rem;
+  color: #444;
+  margin-bottom: 1.5rem;
+}
+
+/* An error message box */
+.error-banner {
+  background: #fdf0f0;
+  border-left: 4px solid #c0392b;
+  padding: 0.75rem 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.9rem;
+  color: #7b2020;
+  margin-bottom: 1.5rem;
+}
+
+/* --- Forms ------------------------------------------- */
+
+.intake-form {
+  max-width: 700px;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.2rem;
+  color: #1a1a1a;
+}
+
+.field-hint {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.82rem;
+  color: #777;
+  margin-bottom: 0.4rem;
+}
+
+.optional {
+  font-weight: 400;
+  color: #999;
+  font-size: 0.85rem;
+}
+
+.form-group textarea,
+.form-group select,
+.form-group input[type="file"] {
+  width: 100%;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.95rem;
+  color: #222;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 0.5rem 0.6rem;
+}
+
+.form-group textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.form-group select {
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.form-group input[type="file"] {
+  padding: 0.4rem 0.5rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.88rem;
+}
+
+/* Two-column row for the two dropdowns */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-actions {
+  margin-top: 1.75rem;
+}
+
+/* Primary action button — works on both <button> and <a> */
+.btn-primary {
+  display: inline-block;
+  background: #2a6cc4;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 0.6rem 1.4rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  line-height: 1.4;
+}
+
+.btn-primary:hover {
+  background: #1a4a8a;
+  color: #fff;
+}
+
+/* Secondary (link-style) button */
+.btn-secondary {
+  display: inline-block;
+  background: #f0ede8;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 0.5rem 1.1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.btn-secondary:hover {
+  background: #e3dfd8;
+  color: #111;
+}
+
+/* --- Preview page ------------------------------------ */
+
+.preview-section {
+  margin-bottom: 2.5rem;
+  border: 1px solid #e0ddd8;
+  border-radius: 4px;
+  padding: 1.25rem 1.5rem;
+  background: #fff;
+}
+
+.preview-section h2 {
+  margin-top: 0;
+  font-size: 1.05rem;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.preview-section.assembled {
+  border-color: #2a6cc4;
+  background: #f7f9fd;
+}
+
+.preview-section.assembled h2 {
+  color: #2a6cc4;
+}
+
+/* Monospace text block for displaying preformatted content */
+.preview-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: #333;
+  background: #f8f7f5;
+  border: 1px solid #e8e5e0;
+  border-radius: 3px;
+  padding: 0.75rem 1rem;
+  margin: 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.preview-section.assembled .preview-text {
+  background: #eef2fa;
+  border-color: #c5d5ec;
+  max-height: 480px;
+}
+
+.preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.preview-actions.bottom {
+  margin-top: 1rem;
+  margin-bottom: 0;
+}
+
+.coming-soon {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.88rem;
+  color: #999;
+  font-style: italic;
+}
+
+/* --- Review page ------------------------------------- */
+
+.review-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.review-header h1 {
+  margin: 0;
+}
+
+/* Compact metadata strip */
+.run-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.8rem;
+  color: #666;
+  background: #f0ede8;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.55rem 1rem;
+  margin-bottom: 1.75rem;
+}
+
+/* Side-by-side columns for raw vs polished */
+.review-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.review-col h3 {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #999;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+/* Shared text display for transcript and polished output */
+.review-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: #222;
+  background: #fff;
+  border: 1px solid #e0ddd8;
+  border-radius: 4px;
+  padding: 1rem 1.25rem;
+  min-height: 200px;
+  max-height: 560px;
+  overflow-y: auto;
+}
+
+/* Polished column gets a subtle blue tint to distinguish it */
+.review-text.polished {
+  background: #f7f9fd;
+  border-color: #c5d5ec;
+}
+
+/* Ambiguities — yellow tint, visually distinct from main content */
+.ambiguities-section {
+  background: #fffbf0;
+  border: 1px solid #e8d98f;
+  border-radius: 4px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.ambiguities-section h3 {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #a07800;
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-weight: 700;
+}
+
+/* Ambiguities text uses the same base .review-text but without the override classes */
+.ambiguities-section .review-text {
+  background: #fffdf5;
+  border-color: #e8d98f;
+  min-height: unset;
+  max-height: 320px;
+}
+
+.review-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Inline save form on the review page */
+.save-form {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.save-label {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.88rem;
+  color: #555;
+  font-weight: 600;
+}
+
+.save-date-input {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 0.4rem 0.6rem;
+  background: #fff;
+  color: #222;
+}
+
+/* --- Archive page ------------------------------------ */
+
+.archive-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.archive-item {
+  display: flex;
+  align-items: baseline;
+  gap: 1.25rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid #e8e5e0;
+}
+
+.archive-item:first-child {
+  border-top: 1px solid #e8e5e0;
+}
+
+.archive-item-date {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.85rem;
+  color: #888;
+  white-space: nowrap;
+  min-width: 6rem;
+}
+
+.archive-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.archive-item-title a {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1rem;
+  color: #1a1a1a;
+  text-decoration: none;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.archive-item-title a:hover {
+  color: #2a6cc4;
+}
+
+.archive-item-meta {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.78rem;
+  color: #aaa;
+  margin-top: 0.15rem;
+}
+
+.archive-item-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* --- Entry detail page ------------------------------- */
+
+.entry-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.entry-header h1 {
+  margin: 0;
+}
+
+.entry-header-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-shrink: 0;
+  padding-top: 0.25rem;
+}
+
+.entry-section {
+  margin-bottom: 1.75rem;
+}
+
+/* Entry body: full height, no max-height cap */
+.entry-body {
+  max-height: none;
+}
+
+/* Collapsible raw transcript */
+.transcript-details {
+  margin-top: 2rem;
+  border: 1px solid #e0ddd8;
+  border-radius: 4px;
+}
+
+.transcript-details summary {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  padding: 0.6rem 1rem;
+  user-select: none;
+  list-style: none;
+}
+
+/* Remove default triangle in Safari/Firefox */
+.transcript-details summary::-webkit-details-marker { display: none; }
+
+.transcript-details summary::before {
+  content: "▶ ";
+  font-size: 0.7rem;
+}
+
+.transcript-details[open] summary::before {
+  content: "▼ ";
+}
+
+.transcript-details .transcript-raw {
+  border: none;
+  border-top: 1px solid #e0ddd8;
+  border-radius: 0 0 4px 4px;
+  max-height: 400px;
+}
+
+/* --- Management pages (context packs, prompt profiles) --------------- */
+
+/* Page header row: title on left, action button on right */
+.mgmt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  gap: 1rem;
+}
+
+.mgmt-header h1 {
+  margin: 0;
+}
+
+.mgmt-header-actions {
+  flex-shrink: 0;
+}
+
+/* List of packs / profiles */
+.mgmt-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.mgmt-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid #e8e5e0;
+  flex-wrap: wrap;
+}
+
+.mgmt-item:first-child {
+  border-top: 1px solid #e8e5e0;
+}
+
+.mgmt-item-main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.mgmt-item-name {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1rem;
+  color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mgmt-item-meta {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.78rem;
+  color: #aaa;
+  white-space: nowrap;
+}
+
+.mgmt-item-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+/* Small pill badge shown next to the default item */
+.badge {
+  display: inline-block;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.2em 0.5em;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.badge-default {
+  background: #e4eefa;
+  color: #2a6cc4;
+  border: 1px solid #b8d0f0;
+}
+
+/* Destructive action button */
+.btn-danger {
+  display: inline-block;
+  background: #fff0f0;
+  color: #c0392b;
+  border: 1px solid #e8b8b8;
+  border-radius: 3px;
+  padding: 0.5rem 1.1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.btn-danger:hover {
+  background: #fde0e0;
+  color: #922b21;
+}
+
+/* --- Active nav link ----------------------------------------- */
+
+/* The current section is highlighted in white */
+.site-nav a[aria-current="page"] {
+  color: #fff;
+  border-bottom: 2px solid #2a6cc4;
+  padding-bottom: 1px;
+}
+
+/* --- Wide container (used by review page for two-column layout) */
+
+.container.wide {
+  max-width: 1100px;
+}
+
+/* --- Responsive: narrow screens ----------------------------- */
+
+/* Stack the two-column review layout on narrow viewports */
+@media (max-width: 720px) {
+  .review-columns {
+    grid-template-columns: 1fr;
+  }
+
+  /* Stack the context pack / prompt profile dropdowns */
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* Stack archive action buttons below the title */
+  .archive-item {
+    flex-wrap: wrap;
+  }
+
+  /* Stack management item actions below the name */
+  .mgmt-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
+  /* Save form on review page: stack vertically */
+  .save-form {
+    flex-wrap: wrap;
+  }
+}

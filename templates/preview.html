@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Preview — Journal Refinery{% endblock %}
+
+{% block content %}
+<h1>Preview</h1>
+<p class="subtitle">
+  Inspect the assembled request below. Nothing has been sent to Claude yet.
+  Go back to the form to submit.
+</p>
+
+<div class="preview-actions top">
+  <a href="/" class="btn-secondary">&larr; Back to form</a>
+</div>
+
+{# ------------------------------------------------------------------ #}
+{# Component sections                                                   #}
+{# ------------------------------------------------------------------ #}
+
+<section class="preview-section">
+  <h2>Transcript</h2>
+  <pre class="preview-text">{{ transcript }}</pre>
+</section>
+
+<section class="preview-section">
+  <h2>Context Pack — <em>{{ pack['name'] }}</em> (v{{ pack['version'] }})</h2>
+  <pre class="preview-text">{{ pack['content'] }}</pre>
+</section>
+
+<section class="preview-section">
+  <h2>Prompt Profile — <em>{{ profile['name'] }}</em> (v{{ profile['version'] }})</h2>
+  <pre class="preview-text">{{ profile['content'] }}</pre>
+</section>
+
+{% if notes %}
+<section class="preview-section">
+  <h2>Notes</h2>
+  <pre class="preview-text">{{ notes }}</pre>
+</section>
+{% endif %}
+
+{# ------------------------------------------------------------------ #}
+{# Assembled request                                                    #}
+{# ------------------------------------------------------------------ #}
+
+<section class="preview-section assembled">
+  <h2>Assembled request</h2>
+  <p class="field-hint">
+    This is exactly what will be sent to Claude when you click Refine.
+    Order: prompt profile &rarr; context pack &rarr; transcript
+    {% if notes %}&rarr; notes{% endif %}.
+  </p>
+  <pre class="preview-text">{{ assembled }}</pre>
+</section>
+
+<div class="preview-actions bottom">
+  <a href="/" class="btn-secondary">&larr; Back to form</a>
+</div>
+
+{% endblock %}
