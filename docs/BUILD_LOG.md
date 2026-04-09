@@ -432,4 +432,80 @@ reusable building blocks that feed into every journal refinement run.
 
 **Phase 6 status:** Complete.
 
+---
+
+## 2026-04-09 — Phase 7: Tests, Cleanup, and Stable v1
+
+**Goal:** Leave the project in a state a beginner can run, understand, and trust.
+
+**Test suite added:**
+
+Five test files covering the five meaningful logic units of the app.
+All tests use an in-memory SQLite database — the real `data/journal.db` is
+never touched during a test run. Total: **52 tests, all passing**.
+
+| File | What is tested |
+|------|---------------|
+| `tests/test_db.py` | All five tables exist after init; required columns present in `runs` and `entries`; `_migrate()` is safe to call twice (no crash, no duplicate columns) |
+| `tests/test_intake.py` | `assemble_request()` puts profile before pack before transcript; separators present; notes included/excluded correctly; whitespace stripped |
+| `tests/test_parser.py` | No-ambiguities path; plain, bold, period, and case-insensitive heading variants; empty section → None; whitespace stripped from both parts; word "ambiguities" inside body does not trigger split |
+| `tests/test_entries.py` | `_make_title()` truncation at word boundary, newline collapsing, 100-char edge case; save+retrieve round-trip; `get_entry_for_run`; `get_all_entries` order and empty-table case |
+| `tests/test_export.py` | `_build_markdown()` heading, metadata, polished text, with/without ambiguities, ambiguities appear after polished text, ends with newline |
+
+**Infrastructure:**
+
+- `tests/conftest.py` — shared `db_conn` pytest fixture. Creates a fresh
+  in-memory SQLite connection per test with FK enforcement enabled. The
+  `db_conn` fixture is used by `test_db.py` indirectly (tests make their own
+  connections there) and directly by `test_entries.py`.
+- `pytest.ini` — sets `testpaths = tests` and `addopts = -v` so `python -m
+  pytest` from the project root finds and names all tests without extra flags.
+- `requirements.txt` — added `pytest>=8.0` so a single `pip install -r
+  requirements.txt` gives a beginner everything needed to run both the app and
+  the tests.
+
+**README expanded:**
+
+Added four new sections to the README:
+1. **Running tests** — `python -m pytest`, with variants for quiet output and
+   single-file runs.
+2. **Where data is stored** — table listing every data location including the
+   SQLite tables, exports (browser downloads folder, not disk), and seed files.
+3. **How Context Packs work** — explanation of purpose, example content, the
+   edit/version workflow, and how to manage packs in the UI.
+4. **How Prompt Profiles work** — same structure; explains the Ambiguities
+   section mechanism.
+
+**What the tests do NOT cover (known limitations):**
+
+1. **HTTP routes** — no integration tests for the FastAPI routes. End-to-end
+   route testing (e.g., with `httpx` + `TestClient`) would require either a
+   real database file or dependency injection to swap the DB connection. Not
+   added to keep complexity low.
+2. **Claude API call** — `call_claude()` is not tested because testing it
+   requires a live API key and would make the suite slow and network-dependent.
+   The error-handling branches (AuthenticationError, RateLimitError, etc.) are
+   readable in `app/claude_client.py` but not unit-tested.
+3. **Jinja2 template rendering** — templates are not rendered in tests. Visual
+   regressions are caught manually.
+4. **`packs.py` write operations** — CRUD for packs and profiles follows the
+   same SQLite insert/update/delete pattern exercised in `test_entries.py`.
+   Testing it separately would add tests without adding coverage of new logic.
+5. **`resolve_transcript()` async helper** — async functions need `pytest-asyncio`
+   or a manual event loop in tests. Skipped to avoid adding a dependency.
+
+**Assumptions made:**
+
+1. `pytest>=8.0` is a reasonable floor — it is widely available and the API
+   used (fixtures, plain `assert`, file discovery) is stable across 8.x.
+2. Tests import `_build_markdown` from `main.py`. Importing `main` creates the
+   FastAPI app object and mounts static files, but does not start the server or
+   touch the database. This is acceptable for unit tests.
+3. `_make_title` and `_build_markdown` are tested as private functions
+   (`_`-prefixed). The alternative — making them public — would change the
+   module API just to satisfy a test convention; testing private helpers
+   directly is simpler and appropriate here.
+
+**Phase 7 status:** Complete. v1 is done.
+
 **Next step:** Phase 5 — Polish, hardening, CRUD for Context Packs and Prompt Profiles, seed file ingestion.
